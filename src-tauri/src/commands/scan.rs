@@ -20,8 +20,7 @@ pub async fn scan_folder(
     state: State<'_, AppState>,
     root: String,
 ) -> Result<ScanResult, AppError> {
-    let root_path = PathBuf::from(&root)
-        .canonicalize()
+    let root_path = dunce::canonicalize(PathBuf::from(&root))
         .map_err(|_| AppError::Other(format!("cannot open folder: {root}")))?;
 
     let config = state

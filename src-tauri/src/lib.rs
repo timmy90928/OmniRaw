@@ -2,14 +2,18 @@ mod commands;
 mod config;
 mod error;
 mod model;
+mod preview;
+mod protocol;
 mod scanner;
 mod state;
+mod thumbs;
 
 pub use error::AppError;
 
 use tauri::Manager;
 
 use state::AppState;
+use thumbs::ThumbService;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -20,6 +24,7 @@ pub fn run() {
                 .level(log::LevelFilter::Info)
                 .build(),
         )
+        .register_asynchronous_uri_scheme_protocol("omniraw", protocol::handle)
         .setup(|app| {
             let config_path = app
                 .path()
@@ -33,13 +38,22 @@ pub fn run() {
                     log::warn!("failed to write default config: {e}");
                 }
             }
-            app.manage(AppState::new(cfg, config_path));
+
+            let cache_root = app
+                .path()
+                .app_cache_dir()
+                .expect("cannot resolve app cache dir");
+            let thumbs = ThumbService::new(app.handle().clone(), cache_root)?;
+
+            app.manage(AppState::new(cfg, config_path, thumbs));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::scan::scan_folder,
             commands::settings::get_config,
             commands::settings::set_config,
+            commands::media::request_thumbnails,
+            commands::media::clear_thumbnail_queue,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

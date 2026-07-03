@@ -29,6 +29,17 @@ rayon = "1"
 blake3 = "1"
 base64 = "0.22"
 log = "0.4"
+# canonicalize without Windows \\?\ verbatim prefixes
+dunce = "1"
 
 [dev-dependencies]
 tempfile = "3"
+
+# Image decoding is CPU-bound; unoptimized deps make dev thumbnails 5-20x
+# slower than release. Optimize dependencies only — our own crate still
+# compiles fast for the edit-rebuild loop.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dev]
+opt-level = 1

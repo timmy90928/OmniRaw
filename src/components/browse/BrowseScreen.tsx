@@ -1,8 +1,15 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
+import { useThumbStore } from '../../stores/thumbStore';
 import { useOpenFolder } from '../../hooks/useOpenFolder';
 import { EmptyState } from '../common/EmptyState';
+import { GroupThumb, representativeFile } from '../common/GroupThumb';
+import { requestThumbnails } from '../../api/commands';
 import type { GroupStatus } from '../../types';
+
+/** Pre-warm the first screenfuls; scrolling loads the rest lazily. */
+const PREWARM_COUNT = 100;
 
 const STATUS_KEY: Record<GroupStatus, string> = {
   complete: 'browse.statusComplete',
@@ -16,6 +23,15 @@ export function BrowseScreen() {
   const scanning = useLibraryStore((s) => s.scanning);
   const scanProgress = useLibraryStore((s) => s.scanProgress);
   const openFolder = useOpenFolder();
+
+  useEffect(() => {
+    if (!scanResult) return;
+    useThumbStore.getState().reset();
+    const paths = scanResult.groups
+      .slice(0, PREWARM_COUNT)
+      .map((g) => representativeFile(g).path);
+    void requestThumbnails(paths);
+  }, [scanResult]);
 
   if (scanning) {
     return (
@@ -64,6 +80,7 @@ export function BrowseScreen() {
       <ul className="group-list">
         {scanResult.groups.map((group) => (
           <li key={group.id} className="group-row">
+            <GroupThumb group={group} />
             <span className={`status-badge ${group.status}`}>{t(STATUS_KEY[group.status])}</span>
             <span className="group-name">{group.baseName}</span>
             <span className="group-files">

@@ -183,6 +183,24 @@ button.primary:disabled {
   border-bottom: none;
 }
 
+.group-thumb {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #ececf0;
+}
+
+.group-thumb.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
 .status-badge {
   flex-shrink: 0;
   padding: 1px 8px;

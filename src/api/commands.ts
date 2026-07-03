@@ -12,3 +12,11 @@ export function getConfig(): Promise<AppConfig> {
 export function setConfig(config: AppConfig): Promise<AppConfig> {
   return invoke<AppConfig>('set_config', { config });
 }
+
+export function requestThumbnails(paths: string[]): Promise<void> {
+  return invoke<void>('request_thumbnails', { paths });
+}
+
+export function clearThumbnailQueue(): Promise<void> {
+  return invoke<void>('clear_thumbnail_queue');
+}
