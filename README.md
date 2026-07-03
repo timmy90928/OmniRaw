@@ -16,6 +16,17 @@ A cross-platform (Windows / macOS) photo culling tool that keeps RAW and non-RAW
 
 Tauri 2 + Rust backend (rawler, trash, rayon) · React 19 + TypeScript + Vite frontend (zustand, TanStack Virtual, i18next)
 
+## Download & Install
+
+Grab the latest installer from [GitHub Releases](https://github.com/timmy90928/OmniRaw/releases):
+
+- **Windows**: `OmniRaw_x.y.z_x64-setup.exe`
+- **macOS** (Apple Silicon & Intel, universal): `OmniRaw_x.y.z_universal.dmg`
+
+> **macOS note**: builds are currently unsigned. If macOS blocks the app,
+> clear the quarantine flag after copying it to Applications:
+> `xattr -cr /Applications/OmniRaw.app`
+
 ## Development
 
 ```sh
