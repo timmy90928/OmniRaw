@@ -3,6 +3,7 @@ name = "omniraw"
 version = "0.1.0"
 description = "RAW/JPEG lifecycle-linked photo culling tool"
 authors = ["Timmy"]
+license = "MIT"
 edition = "2021"
 
 [lib]

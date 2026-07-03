@@ -143,3 +143,7 @@ Detailed layout and project conventions live in [CLAUDE.md](CLAUDE.md).
 - macOS code signing & notarization
 - Sort / filter in the browse grid
 - Optional subfolder pairing (`RAW/` sidecar layout)
+
+## License
+
+[MIT](LICENSE)
