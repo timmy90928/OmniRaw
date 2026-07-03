@@ -29,10 +29,17 @@ Grab the latest installer from [GitHub Releases](https://github.com/timmy90928/O
 
 ## Development
 
+Prerequisites: Node.js 22+, Rust (via [rustup](https://rustup.rs)). Windows additionally needs MSVC Build Tools; macOS needs Xcode Command Line Tools (`xcode-select --install`).
+
 ```sh
 npm install
-npm run tauri dev    # requires Rust (rustup, MSVC on Windows)
-npm run tauri build  # production installer
+npm run tauri dev    # run locally with hot reload
 ```
+
+Packaging is fully automated on GitHub Actions — no local `tauri build` needed:
+
+- every push / PR runs Rust tests + TypeScript build
+- pushes to `main` produce macOS (.dmg, universal) and Windows (.exe/.msi) bundles as workflow artifacts
+- pushing a `v*` tag publishes a GitHub Release with all installers attached
 
 Project layout and conventions: see [CLAUDE.md](CLAUDE.md) (detailed source of truth).

@@ -64,4 +64,4 @@ OmniRaw/
 - 前端:`npm run build`(含 tsc)
 - GUI:`npm run tauri dev` 手動 smoke;測試照片用 raw.pixls.us CC0 樣本(Canon CR2/CR3 必測)
 - 打包:`npm run tauri build` → `src-tauri/target/release/bundle/`(NSIS setup.exe + MSI)
-- **macOS 版**:無 Mac 實機,由 GitHub Actions(`.github/workflows/build.yml`,tauri-action)編譯 universal `.dmg`;push `v*` tag 會自動建 GitHub Release 附安裝檔,`workflow_dispatch` 手動觸發則產 artifacts。repo:github.com/timmy90928/OmniRaw(public)。macOS 版未簽章,需 `xattr -cr` 解除隔離
+- **打包全自動化(CI-first)**:`.github/workflows/build.yml`——每次 push/PR 跑 `cargo test` + 前端 build(ubuntu);push `main` 產 macOS universal `.dmg` + Windows installer 為 artifacts;push `v*` tag 自動建 GitHub Release。本機不需要 `tauri build`。repo:github.com/timmy90928/OmniRaw(public)。macOS 版未簽章,需 `xattr -cr` 解除隔離。使用者同時在 Windows 與 Mac 上開發

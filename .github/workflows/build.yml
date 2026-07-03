@@ -2,11 +2,47 @@ name: build
 
 on:
   workflow_dispatch:
+  pull_request:
   push:
+    branches: [main]
     tags: ['v*']
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
 jobs:
-  build:
+  # Fast gate on every push/PR: Rust tests + TypeScript build.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # Tauri's Linux system dependencies (needed to compile the crate)
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
+            libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+      - run: npm run build
+      - run: cargo test
+        working-directory: src-tauri
+
+  # Full bundles: on main pushes → workflow artifacts; on v* tags → GitHub Release.
+  bundle:
+    needs: test
+    if: github.event_name != 'pull_request'
     strategy:
       fail-fast: false
       matrix:
@@ -48,7 +84,7 @@ jobs:
           releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('OmniRaw {0}', github.ref_name) || '' }}
           args: ${{ matrix.args }}
 
-      # For manual runs (no tag), expose the bundles as workflow artifacts.
+      # For non-tag runs, expose the bundles as workflow artifacts.
       - uses: actions/upload-artifact@v4
         if: "!startsWith(github.ref, 'refs/tags/')"
         with:
