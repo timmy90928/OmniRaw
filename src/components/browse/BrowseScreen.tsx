@@ -2,20 +2,10 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
 import { useThumbStore } from '../../stores/thumbStore';
+import { useCullStore } from '../../stores/cullStore';
 import { useOpenFolder } from '../../hooks/useOpenFolder';
 import { EmptyState } from '../common/EmptyState';
-import { GroupThumb, representativeFile } from '../common/GroupThumb';
-import { requestThumbnails } from '../../api/commands';
-import type { GroupStatus } from '../../types';
-
-/** Pre-warm the first screenfuls; scrolling loads the rest lazily. */
-const PREWARM_COUNT = 100;
-
-const STATUS_KEY: Record<GroupStatus, string> = {
-  complete: 'browse.statusComplete',
-  rawOnly: 'browse.statusRawOnly',
-  nonRawOnly: 'browse.statusNonRawOnly',
-};
+import { GridBrowser } from './GridBrowser';
 
 export function BrowseScreen() {
   const { t } = useTranslation();
@@ -26,11 +16,10 @@ export function BrowseScreen() {
 
   useEffect(() => {
     if (!scanResult) return;
+    // New folder → stale thumb statuses and marks no longer apply.
     useThumbStore.getState().reset();
-    const paths = scanResult.groups
-      .slice(0, PREWARM_COUNT)
-      .map((g) => representativeFile(g).path);
-    void requestThumbnails(paths);
+    useCullStore.getState().clearMarks();
+    useCullStore.getState().setIndex(0);
   }, [scanResult]);
 
   if (scanning) {
@@ -76,20 +65,7 @@ export function BrowseScreen() {
           skipped: scanResult.skippedFiles,
         })}
       </p>
-      {/* M4 replaces this text list with the virtualized thumbnail grid */}
-      <ul className="group-list">
-        {scanResult.groups.map((group) => (
-          <li key={group.id} className="group-row">
-            <GroupThumb group={group} />
-            <span className={`status-badge ${group.status}`}>{t(STATUS_KEY[group.status])}</span>
-            <span className="group-name">{group.baseName}</span>
-            <span className="group-files">
-              {[...group.raws, ...group.others].map((f) => f.ext).join(' + ')}
-            </span>
-            <span className="group-dir">{group.dir}</span>
-          </li>
-        ))}
-      </ul>
+      <GridBrowser groups={scanResult.groups} />
     </div>
   );
 }

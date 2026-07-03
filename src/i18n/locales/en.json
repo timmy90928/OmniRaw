@@ -25,7 +25,13 @@
   },
   "cull": {
     "title": "Cull",
-    "empty": "Open a folder in Browse first."
+    "empty": "Open a folder in Browse first.",
+    "markPair": "Delete pair",
+    "markNonRawOnly": "Delete JPG only",
+    "markRawOnly": "Delete RAW only",
+    "sourceRaw": "RAW preview ({{ext}})",
+    "hotkeys": "←/→ navigate · X delete pair · J delete JPG only · R delete RAW only · U unmark · P toggle RAW/JPG · Enter review · Esc back",
+    "groupFiles": "Files in group"
   },
   "review": {
     "title": "Review",
@@ -40,7 +46,20 @@
     "language": "Interface Language"
   },
   "status": {
-    "ready": "Ready"
+    "ready": "Ready",
+    "groups": "{{count}} groups",
+    "marked": "{{count}} marked"
+  },
+  "exif": {
+    "camera": "Camera",
+    "lens": "Lens",
+    "exposure": "Shutter",
+    "aperture": "Aperture",
+    "iso": "ISO",
+    "focalLength": "Focal length",
+    "dateTaken": "Date taken",
+    "dimensions": "Dimensions",
+    "fileSize": "File size"
   },
   "common": {
     "cancel": "Cancel",

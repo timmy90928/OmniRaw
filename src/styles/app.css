@@ -243,6 +243,272 @@ button.primary:disabled {
   white-space: nowrap;
 }
 
+/* ---------- Grid browser ---------- */
+
+.grid-browser {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.grid-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.group-card {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+}
+
+.group-card:hover {
+  border-color: var(--accent);
+}
+
+.group-card.marked {
+  border-color: var(--danger);
+}
+
+.group-card-image {
+  position: relative;
+  height: 196px;
+}
+
+.group-card-image .group-thumb {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.group-card.marked .group-card-image img {
+  opacity: 0.45;
+}
+
+.group-card-image .mark-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+.group-card-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.group-card-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mark-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--danger);
+  color: #fff;
+}
+
+.mark-badge.nonRawOnly {
+  background: #4338ca;
+}
+
+.mark-badge.rawOnly {
+  background: #b45309;
+}
+
+/* ---------- Cull view ---------- */
+
+.cull-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+}
+
+.cull-main {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  min-height: 0;
+}
+
+.preview-pane {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  background: #1a1a1e;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.preview-overlay {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.source-badge {
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+}
+
+.source-badge.raw {
+  background: #b45309;
+}
+
+.exif-panel {
+  width: 260px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 13px;
+}
+
+.exif-panel h2 {
+  font-size: 14px;
+  margin-bottom: 10px;
+  word-break: break-all;
+}
+
+.exif-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.exif-row dt {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.exif-row dd {
+  text-align: right;
+  word-break: break-word;
+}
+
+.exif-files {
+  margin-top: 12px;
+}
+
+.exif-files h3 {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.exif-files ul {
+  list-style: none;
+  font-size: 12px;
+}
+
+.exif-files li {
+  padding: 2px 0;
+  color: var(--text-muted);
+}
+
+.exif-files li.current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.cull-hint {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.cull-position {
+  font-variant-numeric: tabular-nums;
+}
+
+.filmstrip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  flex-shrink: 0;
+}
+
+.filmstrip-item {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  background: none;
+}
+
+.filmstrip-item .group-thumb {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.filmstrip-item.current {
+  border-color: var(--accent);
+}
+
+.filmstrip-item.marked {
+  border-color: var(--danger);
+}
+
+.filmstrip-item.marked img {
+  opacity: 0.4;
+}
+
+.status-right {
+  display: flex;
+  gap: 12px;
+}
+
+.status-marked {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 .settings-screen h1 {
   font-size: 20px;
   margin-bottom: 16px;

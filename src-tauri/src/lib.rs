@@ -1,6 +1,7 @@
 mod commands;
 mod config;
 mod error;
+mod exif;
 mod model;
 mod preview;
 mod protocol;
@@ -54,6 +55,7 @@ pub fn run() {
             commands::settings::set_config,
             commands::media::request_thumbnails,
             commands::media::clear_thumbnail_queue,
+            commands::media::get_metadata,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

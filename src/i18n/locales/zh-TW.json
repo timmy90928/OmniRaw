@@ -25,7 +25,13 @@
   },
   "cull": {
     "title": "選片",
-    "empty": "請先在「瀏覽」開啟資料夾。"
+    "empty": "請先在「瀏覽」開啟資料夾。",
+    "markPair": "刪整組",
+    "markNonRawOnly": "只刪 JPG",
+    "markRawOnly": "只刪 RAW",
+    "sourceRaw": "RAW 預覽 ({{ext}})",
+    "hotkeys": "←/→ 翻頁 · X 刪整組 · J 只刪 JPG · R 只刪 RAW · U 取消 · P 切換 RAW/JPG · Enter 審閱 · Esc 返回",
+    "groupFiles": "同組檔案"
   },
   "review": {
     "title": "審閱",
@@ -40,7 +46,20 @@
     "language": "介面語言"
   },
   "status": {
-    "ready": "就緒"
+    "ready": "就緒",
+    "groups": "{{count}} 組",
+    "marked": "已標記 {{count}}"
+  },
+  "exif": {
+    "camera": "相機",
+    "lens": "鏡頭",
+    "exposure": "快門",
+    "aperture": "光圈",
+    "iso": "ISO",
+    "focalLength": "焦距",
+    "dateTaken": "拍攝時間",
+    "dimensions": "尺寸",
+    "fileSize": "檔案大小"
   },
   "common": {
     "cancel": "取消",
