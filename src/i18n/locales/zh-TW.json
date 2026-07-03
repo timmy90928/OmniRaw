@@ -1,0 +1,50 @@
+{
+  "app": {
+    "name": "OmniRaw"
+  },
+  "nav": {
+    "browse": "瀏覽",
+    "cull": "選片",
+    "review": "審閱",
+    "orphans": "孤兒清理",
+    "settings": "設定"
+  },
+  "welcome": {
+    "title": "歡迎使用 OmniRaw",
+    "subtitle": "RAW 與 JPG 生命週期連動的選片工具",
+    "openFolder": "開啟資料夾"
+  },
+  "browse": {
+    "title": "瀏覽",
+    "empty": "尚未開啟資料夾。點選「開啟資料夾」開始掃描。",
+    "scanning": "掃描中… 已掃描 {{count}} 個檔案",
+    "summary": "共 {{total}} 組:{{complete}} 組完整配對、{{rawOnly}} 組僅 RAW、{{nonRawOnly}} 組僅非 RAW(略過 {{skipped}} 個非影像檔)",
+    "statusComplete": "配對",
+    "statusRawOnly": "僅 RAW",
+    "statusNonRawOnly": "僅 JPG"
+  },
+  "cull": {
+    "title": "選片",
+    "empty": "請先在「瀏覽」開啟資料夾。"
+  },
+  "review": {
+    "title": "審閱",
+    "empty": "目前沒有標記為刪除的照片。"
+  },
+  "orphans": {
+    "title": "孤兒清理",
+    "empty": "尚未掃描,或沒有找到孤兒檔案。"
+  },
+  "settings": {
+    "title": "設定",
+    "language": "介面語言"
+  },
+  "status": {
+    "ready": "就緒"
+  },
+  "common": {
+    "cancel": "取消",
+    "confirm": "確認",
+    "loading": "載入中…"
+  }
+}

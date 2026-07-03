@@ -1,0 +1,50 @@
+{
+  "app": {
+    "name": "OmniRaw"
+  },
+  "nav": {
+    "browse": "Browse",
+    "cull": "Cull",
+    "review": "Review",
+    "orphans": "Orphan Cleanup",
+    "settings": "Settings"
+  },
+  "welcome": {
+    "title": "Welcome to OmniRaw",
+    "subtitle": "Culling tool with RAW/JPG lifecycle linking",
+    "openFolder": "Open Folder"
+  },
+  "browse": {
+    "title": "Browse",
+    "empty": "No folder opened yet. Click \"Open Folder\" to start scanning.",
+    "scanning": "Scanning… {{count}} files scanned",
+    "summary": "{{total}} groups: {{complete}} paired, {{rawOnly}} RAW only, {{nonRawOnly}} non-RAW only ({{skipped}} non-image files skipped)",
+    "statusComplete": "Paired",
+    "statusRawOnly": "RAW only",
+    "statusNonRawOnly": "JPG only"
+  },
+  "cull": {
+    "title": "Cull",
+    "empty": "Open a folder in Browse first."
+  },
+  "review": {
+    "title": "Review",
+    "empty": "No photos are marked for deletion."
+  },
+  "orphans": {
+    "title": "Orphan Cleanup",
+    "empty": "Not scanned yet, or no orphan files found."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Interface Language"
+  },
+  "status": {
+    "ready": "Ready"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading…"
+  }
+}
