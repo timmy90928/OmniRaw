@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
 import { useCullStore } from '../../stores/cullStore';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { useGlobalHotkeys } from '../../hooks/useGlobalHotkeys';
 import { groupFiles } from '../../utils/marks';
 import { EmptyState } from '../common/EmptyState';
@@ -34,14 +35,19 @@ export function CullView() {
       s().markFiles(group.id, paths);
       s().step(1, groups.length);
     };
-    // Delete toggles: pressing it on a fully-marked group unmarks instead.
+    // Delete toggles: marked (any files) → unmark; otherwise mark using the
+    // configured default mode (Settings), falling back to the whole group.
     const toggleDelete = () => {
       const current = s().marked.get(group.id);
-      if (current && current.size === allPaths.length) {
+      if (current && current.size > 0) {
         s().unmark(group.id);
-      } else {
-        markAndAdvance(allPaths);
+        return;
       }
+      const mode = useSettingsStore.getState().config?.defaultDeleteMode ?? 'pair';
+      const both = rawPaths.length > 0 && otherPaths.length > 0;
+      const paths =
+        mode === 'nonRawOnly' && both ? otherPaths : mode === 'rawOnly' && both ? rawPaths : allPaths;
+      markAndAdvance(paths);
     };
     const currentFile = files[s().previewIndex % files.length];
     return {

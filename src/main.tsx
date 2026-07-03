@@ -6,6 +6,10 @@ import './styles/app.css';
 import { onScanProgress, onThumbReady, onThumbError } from './api/events';
 import { useLibraryStore } from './stores/libraryStore';
 import { useThumbStore } from './stores/thumbStore';
+import { useSettingsStore } from './stores/settingsStore';
+
+// Load persisted config (language, extension lists) before first paint settles.
+void useSettingsStore.getState().load();
 
 // Tauri events land outside the React tree; write straight into the stores.
 void onScanProgress(({ scannedFiles }) => {

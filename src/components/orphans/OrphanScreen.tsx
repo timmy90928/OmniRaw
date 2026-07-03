@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
+import { useToastStore } from '../../stores/toastStore';
 import { deleteFiles } from '../../api/commands';
 import { EmptyState } from '../common/EmptyState';
 import { GroupThumb } from '../common/GroupThumb';
@@ -120,6 +121,7 @@ export function OrphanScreen() {
       setSelected(new Set());
     } catch (err) {
       console.error('orphan deletion failed', err);
+      useToastStore.getState().push('error', t('errors.deleteFailed'));
     } finally {
       setBusy(false);
       setConfirming(false);

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { StatusBar } from './StatusBar';
+import { Toasts } from '../common/Toasts';
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -10,6 +11,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="app-content">{children}</main>
         <StatusBar />
       </div>
+      <Toasts />
     </div>
   );
 }

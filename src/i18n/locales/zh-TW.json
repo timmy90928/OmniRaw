@@ -63,7 +63,25 @@
   },
   "settings": {
     "title": "設定",
-    "language": "介面語言"
+    "language": "介面語言",
+    "defaultDeleteMode": "Delete 鍵預設標記",
+    "defaultDeleteModeHint": "選片時按 Delete 使用的標記模式",
+    "matchExportedSuffixes": "輸出檔自動歸組",
+    "matchExportedSuffixesHint": "IMG_0001_edit.jpg 這類後綴檔自動歸入 IMG_0001 的組",
+    "rawExtensions": "RAW 副檔名",
+    "nonRawExtensions": "非 RAW 副檔名",
+    "addExtension": "新增…",
+    "removeExtension": "移除 {{ext}}",
+    "saveExtensions": "儲存副檔名清單",
+    "restoreDefaults": "還原預設",
+    "restored": "已還原預設設定。",
+    "saved": "設定已儲存。",
+    "saveFailed": "儲存失敗:{{error}}",
+    "rescanHint": "副檔名清單變更後,重新掃描資料夾才會生效。"
+  },
+  "errors": {
+    "scanFailed": "掃描失敗,請確認資料夾可存取。",
+    "deleteFailed": "刪除失敗,請稍後再試。"
   },
   "status": {
     "ready": "就緒",

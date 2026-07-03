@@ -53,6 +53,7 @@ pub fn run() {
             commands::scan::scan_folder,
             commands::settings::get_config,
             commands::settings::set_config,
+            commands::settings::reset_config,
             commands::media::request_thumbnails,
             commands::media::clear_thumbnail_queue,
             commands::media::get_metadata,

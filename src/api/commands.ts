@@ -27,6 +27,10 @@ export function clearThumbnailQueue(): Promise<void> {
   return invoke<void>('clear_thumbnail_queue');
 }
 
+export function resetConfig(): Promise<AppConfig> {
+  return invoke<AppConfig>('reset_config');
+}
+
 export function commitDeletions(requests: DeletionRequest[]): Promise<DeletionReport> {
   return invoke<DeletionReport>('commit_deletions', { requests });
 }

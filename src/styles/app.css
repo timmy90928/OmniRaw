@@ -773,3 +773,123 @@ button.danger {
   background: var(--bg-panel);
   font-size: 14px;
 }
+
+.settings-section.column {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  max-width: 640px;
+}
+
+.settings-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-actions button {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  cursor: pointer;
+}
+
+.settings-actions button.primary {
+  border: none;
+  background: var(--accent);
+  color: #fff;
+}
+
+.settings-actions button.primary:disabled {
+  opacity: 0.5;
+}
+
+.ext-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ext-editor-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.ext-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ext-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ext-chip button {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.ext-chips input {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 12px;
+  width: 80px;
+  background: transparent;
+}
+
+/* ---------- Toasts ---------- */
+
+.toasts {
+  position: fixed;
+  bottom: 40px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+}
+
+.toast {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: left;
+}
+
+.toast.error {
+  background: var(--danger);
+}
+
+.toast.success {
+  background: #15803d;
+}
+
+.spinner {
+  color: var(--text-muted);
+  padding: 24px;
+}

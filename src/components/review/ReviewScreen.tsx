@@ -8,6 +8,7 @@ import { EmptyState } from '../common/EmptyState';
 import { GroupThumb } from '../common/GroupThumb';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { groupFiles } from '../../utils/marks';
+import { useToastStore } from '../../stores/toastStore';
 import type { DeletionReport } from '../../types';
 
 export function ReviewScreen() {
@@ -52,6 +53,7 @@ export function ReviewScreen() {
       setReport(result);
     } catch (err) {
       console.error('deletion failed', err);
+      useToastStore.getState().push('error', t('errors.deleteFailed'));
     } finally {
       setBusy(false);
       setConfirming(false);

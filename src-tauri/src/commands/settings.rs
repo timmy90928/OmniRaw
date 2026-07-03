@@ -19,3 +19,19 @@ pub async fn set_config(
     *state.config.write().expect("config lock poisoned") = config.clone();
     Ok(config)
 }
+
+/// Restores defaults but keeps the current UI language.
+#[tauri::command]
+pub async fn reset_config(state: State<'_, AppState>) -> Result<AppConfig, AppError> {
+    let language = state
+        .config
+        .read()
+        .expect("config lock poisoned")
+        .language
+        .clone();
+    let mut config = AppConfig::default();
+    config.language = language;
+    config::save(&state.config_path, &config)?;
+    *state.config.write().expect("config lock poisoned") = config.clone();
+    Ok(config)
+}

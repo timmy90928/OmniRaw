@@ -63,7 +63,25 @@
   },
   "settings": {
     "title": "Settings",
-    "language": "Interface Language"
+    "language": "Interface Language",
+    "defaultDeleteMode": "Delete key default mark",
+    "defaultDeleteModeHint": "Mark mode applied when pressing Delete while culling",
+    "matchExportedSuffixes": "Auto-group exported files",
+    "matchExportedSuffixesHint": "Files like IMG_0001_edit.jpg join the IMG_0001 group automatically",
+    "rawExtensions": "RAW extensions",
+    "nonRawExtensions": "Non-RAW extensions",
+    "addExtension": "Add…",
+    "removeExtension": "Remove {{ext}}",
+    "saveExtensions": "Save extension lists",
+    "restoreDefaults": "Restore defaults",
+    "restored": "Defaults restored.",
+    "saved": "Settings saved.",
+    "saveFailed": "Save failed: {{error}}",
+    "rescanHint": "Extension list changes take effect after rescanning the folder."
+  },
+  "errors": {
+    "scanFailed": "Scan failed — check that the folder is accessible.",
+    "deleteFailed": "Deletion failed, please try again."
   },
   "status": {
     "ready": "Ready",

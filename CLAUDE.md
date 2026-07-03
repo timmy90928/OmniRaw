@@ -32,20 +32,21 @@ OmniRaw/
 │   ├── main.tsx           # React root + i18n + 全域樣式
 │   ├── App.tsx            # 依 libraryStore.view 切換畫面(無 router)
 │   ├── types.ts           # TS DTO(鏡射 model.rs)
-│   ├── api/               # typed invoke/listen 包裝、omniraw:// URL 組裝(M2+)
-│   ├── stores/            # zustand:libraryStore(view/掃描結果)、cullStore、settingsStore
-│   ├── hooks/             # useGlobalHotkeys、useThumbnail(M3+)
-│   ├── i18n/              # index.ts + locales/zh-TW.json, en.json
+│   ├── api/               # commands.ts(typed invoke)、events.ts(typed listen)、imageUrl.ts(omniraw:// URL)
+│   ├── stores/            # zustand:libraryStore、cullStore(檔案級標記)、settingsStore、thumbStore、toastStore
+│   ├── hooks/             # useGlobalHotkeys、useOpenFolder
+│   ├── utils/marks.ts     # groupFiles 順序、markSummary 徽章分類
+│   ├── i18n/              # index.ts + locales/zh-TW.json, en.json(必須同步)
 │   ├── styles/app.css     # 淺色主題全域樣式
 │   └── components/
 │       ├── layout/        # AppShell、Sidebar、StatusBar
 │       ├── welcome/       # WelcomeScreen
-│       ├── browse/        # BrowseScreen(M4 加 GridBrowser 等)
-│       ├── cull/          # CullView(M4 加 PreviewPane/Filmstrip/ExifPanel)
-│       ├── review/        # ReviewScreen
+│       ├── browse/        # BrowseScreen、GridBrowser(虛擬化)、StatusBadge
+│       ├── cull/          # CullView、PreviewPane、Filmstrip、ExifPanel
+│       ├── review/        # ReviewScreen(逐檔 checkbox)
 │       ├── orphans/       # OrphanScreen
-│       ├── settings/      # SettingsScreen
-│       └── common/        # EmptyState 等共用件
+│       ├── settings/      # SettingsScreen、ExtensionListEditor
+│       └── common/        # EmptyState、GroupThumb、MarkBadge、ConfirmDialog、Toasts、Spinner
 └── src-tauri/             # Rust 後端
     ├── Cargo.toml / tauri.conf.json / build.rs
     ├── capabilities/default.json   # core:default + dialog:default
@@ -62,3 +63,4 @@ OmniRaw/
 - Rust:`cargo test` + `cargo check`(於 `src-tauri/`)
 - 前端:`npm run build`(含 tsc)
 - GUI:`npm run tauri dev` 手動 smoke;測試照片用 raw.pixls.us CC0 樣本(Canon CR2/CR3 必測)
+- 打包:`npm run tauri build` → `src-tauri/target/release/bundle/`(NSIS setup.exe + MSI)
