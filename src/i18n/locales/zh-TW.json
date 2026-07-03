@@ -29,17 +29,37 @@
     "markPair": "刪整組",
     "markNonRawOnly": "只刪 JPG",
     "markRawOnly": "只刪 RAW",
-    "sourceRaw": "RAW 預覽 ({{ext}})",
-    "hotkeys": "←/→ 翻頁 · X 刪整組 · J 只刪 JPG · R 只刪 RAW · U 取消 · P 切換 RAW/JPG · Enter 審閱 · Esc 返回",
-    "groupFiles": "同組檔案"
+    "markCustom": "刪 {{count}} 檔",
+    "fileMarked": "此檔將刪除",
+    "hotkeys": "←/→ 翻頁 · P/↑↓ 切換同組檔案 · Del 刪整組(再按取消) · J 只刪 JPG · R 只刪 RAW · Space 標記目前檔案 · U 取消 · Enter 審閱 · Esc 返回",
+    "groupFiles": "同組檔案",
+    "clickToPreview": "點擊預覽此檔",
+    "toggleFileMark": "勾選 = 將刪除此檔"
   },
   "review": {
     "title": "審閱",
-    "empty": "目前沒有標記為刪除的照片。"
+    "empty": "目前沒有標記為刪除的照片。",
+    "commit": "刪除 {{count}} 個檔案(進回收桶)",
+    "changeAll": "全部改為:",
+    "remove": "取消標記",
+    "confirmTitle": "確認刪除",
+    "confirmMessage": "{{groups}} 組、共 {{files}} 個檔案將移至回收桶(可還原)。",
+    "confirmButton": "移至回收桶",
+    "deleting": "刪除中… {{done}}/{{total}}",
+    "resultSuccess": "已將 {{count}} 個檔案移至回收桶。",
+    "resultFailed": "{{count}} 個檔案刪除失敗:",
+    "backToBrowse": "回到瀏覽"
   },
   "orphans": {
     "title": "孤兒清理",
-    "empty": "尚未掃描,或沒有找到孤兒檔案。"
+    "empty": "尚未掃描,或沒有找到孤兒檔案。",
+    "rawSection": "僅 RAW(沒有 JPG)",
+    "jpgSection": "僅 JPG(沒有 RAW)",
+    "selectAll": "全選",
+    "deselectAll": "取消全選",
+    "none": "沒有此類孤兒檔案。",
+    "deleteSelected": "刪除所選 {{count}} 個檔案",
+    "confirmMessage": "{{files}} 個檔案將移至回收桶(可還原)。"
   },
   "settings": {
     "title": "設定",

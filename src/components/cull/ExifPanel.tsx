@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getMetadata } from '../../api/commands';
+import { useCullStore } from '../../stores/cullStore';
+import { groupFiles } from '../../utils/marks';
 import type { ExifData, FileEntry, PairGroup } from '../../types';
 
 function formatSize(bytes: number): string {
@@ -8,8 +10,18 @@ function formatSize(bytes: number): string {
   return `${Math.round(bytes / 1024)} KB`;
 }
 
-export function ExifPanel({ group, file }: { group: PairGroup; file: FileEntry }) {
+export function ExifPanel({
+  group,
+  file,
+  markedSet,
+}: {
+  group: PairGroup;
+  file: FileEntry;
+  markedSet: Set<string> | undefined;
+}) {
   const { t } = useTranslation();
+  const setPreviewIndex = useCullStore((s) => s.setPreviewIndex);
+  const toggleFile = useCullStore((s) => s.toggleFile);
   const [exif, setExif] = useState<ExifData | null>(null);
 
   useEffect(() => {
@@ -41,6 +53,8 @@ export function ExifPanel({ group, file }: { group: PairGroup; file: FileEntry }
     ],
   ];
 
+  const files = groupFiles(group);
+
   return (
     <aside className="exif-panel">
       <h2>{file.fileName}</h2>
@@ -59,11 +73,29 @@ export function ExifPanel({ group, file }: { group: PairGroup; file: FileEntry }
       <div className="exif-files">
         <h3>{t('cull.groupFiles')}</h3>
         <ul>
-          {[...group.raws, ...group.others].map((f) => (
-            <li key={f.path} className={f.path === file.path ? 'current' : undefined}>
-              {f.fileName}
-            </li>
-          ))}
+          {files.map((f, index) => {
+            const classes = [];
+            if (f.path === file.path) classes.push('current');
+            if (markedSet?.has(f.path)) classes.push('marked');
+            return (
+              <li key={f.path} className={classes.join(' ') || undefined}>
+                <button
+                  type="button"
+                  className="exif-file-btn"
+                  onClick={() => setPreviewIndex(index)}
+                  title={t('cull.clickToPreview')}
+                >
+                  {f.fileName}
+                </button>
+                <input
+                  type="checkbox"
+                  checked={markedSet?.has(f.path) ?? false}
+                  onChange={() => toggleFile(group.id, f.path)}
+                  title={t('cull.toggleFileMark')}
+                />
+              </li>
+            );
+          })}
         </ul>
       </div>
     </aside>

@@ -3,68 +3,89 @@ import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
 import { useCullStore } from '../../stores/cullStore';
 import { useGlobalHotkeys } from '../../hooks/useGlobalHotkeys';
+import { groupFiles } from '../../utils/marks';
 import { EmptyState } from '../common/EmptyState';
 import { PreviewPane } from './PreviewPane';
 import { ExifPanel } from './ExifPanel';
 import { Filmstrip } from './Filmstrip';
-import type { FileEntry, PairGroup } from '../../types';
-import type { PreviewSource } from '../../stores/cullStore';
-
-/** File shown in the big preview, honoring the RAW↔JPG source toggle. */
-export function previewFile(group: PairGroup, source: PreviewSource): FileEntry {
-  if (source === 'raw') return group.raws[0] ?? group.others[0];
-  return group.others[0] ?? group.raws[0];
-}
 
 export function CullView() {
   const { t } = useTranslation();
   const scanResult = useLibraryStore((s) => s.scanResult);
   const setView = useLibraryStore((s) => s.setView);
   const currentIndex = useCullStore((s) => s.currentIndex);
-  const previewSource = useCullStore((s) => s.previewSource);
+  const previewIndex = useCullStore((s) => s.previewIndex);
   const marked = useCullStore((s) => s.marked);
 
   const groups = scanResult?.groups ?? [];
   const group = groups[Math.min(currentIndex, groups.length - 1)];
+  const files = group ? groupFiles(group) : [];
+  const file = files[previewIndex % Math.max(files.length, 1)];
 
-  const hotkeys = useMemo(() => {
+  const hotkeys = useMemo((): Record<string, () => void> => {
     const s = useCullStore.getState;
+    if (!group) {
+      return { escape: () => setView('browse') };
+    }
+    const allPaths = files.map((f) => f.path);
+    const rawPaths = group.raws.map((f) => f.path);
+    const otherPaths = group.others.map((f) => f.path);
+    const markAndAdvance = (paths: string[]) => {
+      s().markFiles(group.id, paths);
+      s().step(1, groups.length);
+    };
+    // Delete toggles: pressing it on a fully-marked group unmarks instead.
+    const toggleDelete = () => {
+      const current = s().marked.get(group.id);
+      if (current && current.size === allPaths.length) {
+        s().unmark(group.id);
+      } else {
+        markAndAdvance(allPaths);
+      }
+    };
+    const currentFile = files[s().previewIndex % files.length];
     return {
       arrowleft: () => s().step(-1, groups.length),
       arrowright: () => s().step(1, groups.length),
-      x: () => group && s().mark(group.id, 'pair'),
+      arrowup: () => s().cyclePreview(files.length, -1),
+      arrowdown: () => s().cyclePreview(files.length, 1),
+      p: () => s().cyclePreview(files.length, 1),
+      delete: toggleDelete,
+      backspace: toggleDelete,
+      x: toggleDelete,
       j: () => {
         // Delete-JPG-only needs both sides present to be meaningful.
-        if (group && group.others.length > 0 && group.raws.length > 0) {
-          s().mark(group.id, 'nonRawOnly');
-        }
+        if (otherPaths.length > 0 && rawPaths.length > 0) markAndAdvance(otherPaths);
       },
       r: () => {
-        if (group && group.raws.length > 0 && group.others.length > 0) {
-          s().mark(group.id, 'rawOnly');
-        }
+        if (rawPaths.length > 0 && otherPaths.length > 0) markAndAdvance(rawPaths);
       },
-      u: () => group && s().unmark(group.id),
-      p: () => group && group.raws.length > 0 && group.others.length > 0 && s().toggleSource(),
+      ' ': () => currentFile && s().toggleFile(group.id, currentFile.path),
+      u: () => s().unmark(group.id),
       enter: () => setView('review'),
       escape: () => setView('browse'),
     };
-  }, [group, groups.length, setView]);
+  }, [group, files, groups.length, setView]);
 
   useGlobalHotkeys(hotkeys);
 
-  if (!scanResult || groups.length === 0 || !group) {
+  if (!scanResult || groups.length === 0 || !group || !file) {
     return <EmptyState title={t('cull.title')} message={t('cull.empty')} />;
   }
 
-  const file = previewFile(group, previewSource);
-  const mark = marked.get(group.id);
+  const markedSet = marked.get(group.id);
 
   return (
     <div className="cull-view">
       <div className="cull-main">
-        <PreviewPane group={group} file={file} mark={mark} />
-        <ExifPanel group={group} file={file} />
+        <PreviewPane
+          group={group}
+          file={file}
+          fileIndex={files.indexOf(file)}
+          fileCount={files.length}
+          markedSet={markedSet}
+        />
+        <ExifPanel group={group} file={file} markedSet={markedSet} />
       </div>
       <div className="cull-hint">
         <span>{t('cull.hotkeys')}</span>

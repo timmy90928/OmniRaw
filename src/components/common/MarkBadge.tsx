@@ -1,13 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import type { DeleteMode } from '../../types';
+import type { MarkSummary } from '../../utils/marks';
 
-const MARK_KEY: Record<DeleteMode, string> = {
-  pair: 'cull.markPair',
-  nonRawOnly: 'cull.markNonRawOnly',
-  rawOnly: 'cull.markRawOnly',
-};
-
-export function MarkBadge({ mode }: { mode: DeleteMode }) {
+export function MarkBadge({ summary }: { summary: MarkSummary }) {
   const { t } = useTranslation();
-  return <span className={`mark-badge ${mode}`}>{t(MARK_KEY[mode])}</span>;
+  const label =
+    summary.kind === 'pair'
+      ? t('cull.markPair')
+      : summary.kind === 'nonRawOnly'
+        ? t('cull.markNonRawOnly')
+        : summary.kind === 'rawOnly'
+          ? t('cull.markRawOnly')
+          : t('cull.markCustom', { count: summary.count });
+  return <span className={`mark-badge ${summary.kind}`}>{label}</span>;
 }

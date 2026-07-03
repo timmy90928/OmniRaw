@@ -29,17 +29,37 @@
     "markPair": "Delete pair",
     "markNonRawOnly": "Delete JPG only",
     "markRawOnly": "Delete RAW only",
-    "sourceRaw": "RAW preview ({{ext}})",
-    "hotkeys": "←/→ navigate · X delete pair · J delete JPG only · R delete RAW only · U unmark · P toggle RAW/JPG · Enter review · Esc back",
-    "groupFiles": "Files in group"
+    "markCustom": "Delete {{count}} files",
+    "fileMarked": "This file will be deleted",
+    "hotkeys": "←/→ navigate · P/↑↓ cycle files in group · Del delete pair (again to undo) · J delete JPG only · R delete RAW only · Space mark current file · U unmark · Enter review · Esc back",
+    "groupFiles": "Files in group",
+    "clickToPreview": "Click to preview this file",
+    "toggleFileMark": "Checked = this file will be deleted"
   },
   "review": {
     "title": "Review",
-    "empty": "No photos are marked for deletion."
+    "empty": "No photos are marked for deletion.",
+    "commit": "Delete {{count}} files (to Recycle Bin)",
+    "changeAll": "Change all to:",
+    "remove": "Unmark",
+    "confirmTitle": "Confirm deletion",
+    "confirmMessage": "{{files}} files across {{groups}} groups will be moved to the Recycle Bin (recoverable).",
+    "confirmButton": "Move to Recycle Bin",
+    "deleting": "Deleting… {{done}}/{{total}}",
+    "resultSuccess": "{{count}} files moved to the Recycle Bin.",
+    "resultFailed": "{{count}} files failed to delete:",
+    "backToBrowse": "Back to Browse"
   },
   "orphans": {
     "title": "Orphan Cleanup",
-    "empty": "Not scanned yet, or no orphan files found."
+    "empty": "Not scanned yet, or no orphan files found.",
+    "rawSection": "RAW only (no JPG)",
+    "jpgSection": "JPG only (no RAW)",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "none": "No orphans of this kind.",
+    "deleteSelected": "Delete {{count}} selected files",
+    "confirmMessage": "{{files}} files will be moved to the Recycle Bin (recoverable)."
   },
   "settings": {
     "title": "Settings",

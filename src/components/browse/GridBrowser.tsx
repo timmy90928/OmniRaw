@@ -7,6 +7,7 @@ import { requestThumbnails } from '../../api/commands';
 import { GroupThumb, representativeFile } from '../common/GroupThumb';
 import { StatusBadge } from './StatusBadge';
 import { MarkBadge } from '../common/MarkBadge';
+import { markSummary } from '../../utils/marks';
 import type { PairGroup } from '../../types';
 
 const CELL_WIDTH = 200;
@@ -71,18 +72,19 @@ export function GridBrowser({ groups }: { groups: PairGroup[] }) {
               .map((group, i) => {
                 const index = row.index * columns + i;
                 const mark = marked.get(group.id);
+                const isMarked = (mark?.size ?? 0) > 0;
                 return (
                   <button
                     key={group.id}
                     type="button"
-                    className={mark ? 'group-card marked' : 'group-card'}
+                    className={isMarked ? 'group-card marked' : 'group-card'}
                     style={{ width: CELL_WIDTH }}
                     onClick={() => openCull(index)}
                     title={group.baseName}
                   >
                     <div className="group-card-image">
                       <GroupThumb group={group} />
-                      {mark && <MarkBadge mode={mark} />}
+                      {isMarked && mark && <MarkBadge summary={markSummary(group, mark)} />}
                     </div>
                     <div className="group-card-label">
                       <span className="group-card-name">{group.baseName}</span>

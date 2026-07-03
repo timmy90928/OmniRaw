@@ -26,3 +26,14 @@ export function onThumbReady(handler: (payload: ThumbReadyPayload) => void): Pro
 export function onThumbError(handler: (payload: ThumbErrorPayload) => void): Promise<UnlistenFn> {
   return listen<ThumbErrorPayload>('thumb://error', (event) => handler(event.payload));
 }
+
+export interface DeleteProgressPayload {
+  done: number;
+  total: number;
+}
+
+export function onDeleteProgress(
+  handler: (payload: DeleteProgressPayload) => void,
+): Promise<UnlistenFn> {
+  return listen<DeleteProgressPayload>('delete://progress', (event) => handler(event.payload));
+}

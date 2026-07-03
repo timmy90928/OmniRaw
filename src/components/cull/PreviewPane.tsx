@@ -1,19 +1,24 @@
 import { useTranslation } from 'react-i18next';
 import { previewUrl } from '../../api/imageUrl';
 import { MarkBadge } from '../common/MarkBadge';
-import type { DeleteMode, FileEntry, PairGroup } from '../../types';
+import { markSummary } from '../../utils/marks';
+import type { FileEntry, PairGroup } from '../../types';
 
 export function PreviewPane({
   group,
   file,
-  mark,
+  fileIndex,
+  fileCount,
+  markedSet,
 }: {
   group: PairGroup;
   file: FileEntry;
-  mark: DeleteMode | undefined;
+  fileIndex: number;
+  fileCount: number;
+  markedSet: Set<string> | undefined;
 }) {
   const { t } = useTranslation();
-  const isRawSource = file.kind === 'raw';
+  const fileMarked = markedSet?.has(file.path) ?? false;
 
   return (
     <div className="preview-pane">
@@ -25,9 +30,13 @@ export function PreviewPane({
       />
       <div className="preview-overlay">
         <span className={`source-badge ${file.kind}`}>
-          {isRawSource ? t('cull.sourceRaw', { ext: file.ext.toUpperCase() }) : file.ext.toUpperCase()}
+          {file.fileName}
+          {fileCount > 1 && ` (${fileIndex + 1}/${fileCount})`}
         </span>
-        {mark && <MarkBadge mode={mark} />}
+        {fileMarked && <span className="mark-badge file">{t('cull.fileMarked')}</span>}
+        {markedSet && markedSet.size > 0 && (
+          <MarkBadge summary={markSummary(group, markedSet)} />
+        )}
       </div>
     </div>
   );

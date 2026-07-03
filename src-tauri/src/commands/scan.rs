@@ -40,5 +40,7 @@ pub async fn scan_folder(
     .await
     .map_err(|e| AppError::Other(e.to_string()))??;
 
+    *state.groups.write().expect("groups lock poisoned") = result.groups.clone();
+
     Ok(result)
 }

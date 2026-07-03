@@ -56,6 +56,8 @@ pub fn run() {
             commands::media::request_thumbnails,
             commands::media::clear_thumbnail_queue,
             commands::media::get_metadata,
+            commands::delete::commit_deletions,
+            commands::delete::delete_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

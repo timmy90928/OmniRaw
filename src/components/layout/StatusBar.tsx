@@ -12,7 +12,11 @@ export function StatusBar() {
       <span>{scanResult ? scanResult.root : t('status.ready')}</span>
       <span className="status-right">
         {marked.size > 0 && (
-          <span className="status-marked">{t('status.marked', { count: marked.size })}</span>
+          <span className="status-marked">
+            {t('status.marked', {
+              count: [...marked.values()].reduce((sum: number, set) => sum + set.size, 0),
+            })}
+          </span>
         )}
         {scanResult && t('status.groups', { count: scanResult.groups.length })}
       </span>

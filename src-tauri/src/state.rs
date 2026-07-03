@@ -3,13 +3,15 @@ use std::sync::RwLock;
 
 use crate::config::AppConfig;
 use crate::error::AppError;
-use crate::model::FileKind;
+use crate::model::{FileKind, PairGroup};
 use crate::thumbs::ThumbService;
 
 pub struct AppState {
     pub config: RwLock<AppConfig>,
     pub config_path: PathBuf,
     pub scan_root: RwLock<Option<PathBuf>>,
+    /// Last scan result — deletion commands resolve group ids against this.
+    pub groups: RwLock<Vec<PairGroup>>,
     thumbs: ThumbService,
 }
 
@@ -19,6 +21,7 @@ impl AppState {
             config: RwLock::new(config),
             config_path,
             scan_root: RwLock::new(None),
+            groups: RwLock::new(Vec::new()),
             thumbs,
         }
     }

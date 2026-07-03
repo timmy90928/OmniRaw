@@ -1,5 +1,11 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { AppConfig, ExifData, ScanResult } from '../types';
+import type {
+  AppConfig,
+  DeletionReport,
+  DeletionRequest,
+  ExifData,
+  ScanResult,
+} from '../types';
 
 export function scanFolder(root: string): Promise<ScanResult> {
   return invoke<ScanResult>('scan_folder', { root });
@@ -19,6 +25,14 @@ export function requestThumbnails(paths: string[]): Promise<void> {
 
 export function clearThumbnailQueue(): Promise<void> {
   return invoke<void>('clear_thumbnail_queue');
+}
+
+export function commitDeletions(requests: DeletionRequest[]): Promise<DeletionReport> {
+  return invoke<DeletionReport>('commit_deletions', { requests });
+}
+
+export function deleteFiles(paths: string[]): Promise<DeletionReport> {
+  return invoke<DeletionReport>('delete_files', { paths });
 }
 
 const metadataCache = new Map<string, ExifData>();

@@ -59,3 +59,18 @@ export interface AppErrorPayload {
   code: string;
   message: string;
 }
+
+export interface DeletionRequest {
+  groupId: string;
+  mode: DeleteMode;
+}
+
+export interface FailedItem {
+  path: string;
+  error: string;
+}
+
+export interface DeletionReport {
+  trashed: string[];
+  failed: FailedItem[];
+}

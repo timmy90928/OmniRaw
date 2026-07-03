@@ -16,7 +16,8 @@ RAW/JPEG 生命週期連動的照片選片 (culling) 工具。刪 JPG 時同名 
 - 不啟用 Tauri fs plugin;所有吃路徑的 command 必須 canonicalize 並驗證位於 scan root 之下
 - Rust DTO(`src-tauri/src/model.rs`)與 TS 型別(`src/types.ts`)手動鏡射,改一邊必改另一邊;serde 一律 camelCase rename
 - 新增 UI 文案必須同時寫入 `src/i18n/locales/zh-TW.json` 與 `en.json`
-- 選片鍵位:←/→ 翻頁、X 刪整組、J 只刪 JPG、R 只刪 RAW、U 取消、P 切換預覽來源、Enter 進審閱、Esc 返回
+- **標記模型為檔案級 (file-level)**:`cullStore.marked: Map<groupId, Set<filePath>>`;X/J/R 只是快速設定檔案集合的捷徑;審閱與刪除都以檔案為單位(後端走 `delete_files(paths)`)。背景:一個 RAW 可能有多張輸出 JPG,使用者要能逐檔選刪
+- 選片鍵位:←/→ 翻頁、**P 或 ↑/↓ 在同組檔案間輪播**(JPG→輸出檔→RAW)、**Delete/Backspace/X 刪整組(再按同鍵取消,標記後自動跳下一張)**、J 只刪 JPG、R 只刪 RAW(J/R 也自動前進)、**Space 標記/取消目前預覽的單一檔案**、U 取消整組標記、Enter 進審閱、Esc 返回。使用者明確要求快捷鍵人性化(刪除用 Delete 鍵)
 
 ## 版控
 - 每個 milestone(M1–M6)驗收通過後 commit 一次(使用者已授權),Conventional Commits 風格
