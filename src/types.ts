@@ -1,6 +1,6 @@
 // Mirrors Rust DTOs in src-tauri/src/model.rs (kept in sync by hand).
 
-export type View = 'welcome' | 'browse' | 'cull' | 'review' | 'orphans' | 'settings';
+export type View = 'welcome' | 'browse' | 'cull' | 'review' | 'orphans' | 'settings' | 'about';
 
 export type FileKind = 'raw' | 'nonRaw';
 

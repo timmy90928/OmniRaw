@@ -11,12 +11,15 @@ If you shoot RAW+JPEG, most viewers let you cull by browsing JPGs — but deleti
 ## Features
 
 - **Pair-aware scanning** — recursive folder scan groups files by basename (case-insensitive, same folder). Exported variants like `IMG_0001_edit.jpg` or `IMG_0001-1.jpg` automatically join `IMG_0001.CR3`'s group (longest-prefix match; `IMG_00010.jpg` is correctly treated as a different photo).
-- **Fast previews** — RAW thumbnails come from the embedded JPEG preview (no full RAW decode), generated on a parallel worker pool with a persistent disk cache. Virtualized grid stays smooth on large folders.
+- **Fast previews** — RAW thumbnails come from the embedded JPEG preview (no full RAW decode), generated on a parallel worker pool with a persistent disk cache. Virtualized grid stays smooth on large folders; the culling view prefetches neighbouring previews so ← / → is instant.
 - **Keyboard-driven culling** — flip through photos, mark deletions, and cycle between every file in a group (camera JPG ↔ exports ↔ RAW) without touching the mouse.
 - **File-level deletion control** — delete the whole group, JPGs only, RAW only, or hand-pick individual files. A review screen shows exactly which files will go before anything happens.
+- **RAW → JPG conversion** — for a RAW that has no JPG, one click exports its embedded preview to a sibling `.jpg` (same basename), so the shot becomes a normal pair. Available in the culling view and the orphan-cleanup screen.
 - **Recycle-bin only** — every deletion goes to the OS Recycle Bin / Trash. Nothing is permanently deleted; everything is recoverable.
 - **Orphan cleanup** — dedicated screen listing RAW-without-JPG and JPG-without-RAW files for batch cleanup.
+- **Refresh in place** — press **F5** (or the status-bar button) to re-scan the current folder after files change on disk; existing marks on surviving files are kept — no need to re-open the folder.
 - **EXIF panel** — camera, lens, shutter, aperture, ISO, focal length, capture time and dimensions (CR3 metadata included).
+- **Auto-update** — an About page shows the version and changelog, checks GitHub Releases for updates, and installs them in-app (signed updater artifacts).
 - **Configurable** — editable RAW / non-RAW extension lists, default Delete-key behavior, export-suffix grouping toggle.
 - **Bilingual UI** — 繁體中文 (default) and English, switchable at runtime.
 
@@ -56,6 +59,7 @@ Development snapshots for every `main` commit are available as workflow artifact
 | U | Unmark this group |
 | Enter | Go to Review |
 | Esc | Back to Browse |
+| **F5** | Re-scan the current folder in place (works on any screen) |
 
 Marking with Delete/J/R auto-advances to the next photo, so a full cull pass is just arrows + one key per shot.
 
@@ -117,7 +121,12 @@ Packaging is fully automated on GitHub Actions — no local `tauri build` needed
 
 - every push / PR runs Rust tests + the TypeScript build (Ubuntu gate)
 - pushes to `main` produce macOS (`.dmg`, universal) and Windows (`.exe`/`.msi`) bundles as workflow artifacts
-- pushing a `v*` tag publishes a GitHub Release with all installers attached
+- pushing a `v*` tag publishes a GitHub Release with all installers attached plus the signed updater artifacts (`latest.json` + `.sig`)
+
+> **Updater signing**: bundling requires two repository secrets —
+> `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+> (generate a keypair with `npm run tauri signer generate`; the matching public
+> key lives in `src-tauri/tauri.conf.json`). Without them the `bundle` job fails.
 
 ### Architecture (short version)
 

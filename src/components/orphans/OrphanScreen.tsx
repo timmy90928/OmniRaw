@@ -3,10 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
 import { useToastStore } from '../../stores/toastStore';
 import { deleteFiles } from '../../api/commands';
+import { useConvertRaw } from '../../hooks/useConvertRaw';
 import { EmptyState } from '../common/EmptyState';
 import { GroupThumb } from '../common/GroupThumb';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import type { PairGroup } from '../../types';
+
+interface ConvertAction {
+  run: (rawPath: string) => void;
+  busyPath: string | null;
+}
 
 function orphanPaths(group: PairGroup): string[] {
   return [...group.raws, ...group.others].map((f) => f.path);
@@ -18,12 +24,14 @@ function OrphanSection({
   selected,
   onToggle,
   onSelectAll,
+  convert,
 }: {
   title: string;
   groups: PairGroup[];
   selected: Set<string>;
   onToggle: (id: string) => void;
   onSelectAll: (ids: string[], select: boolean) => void;
+  convert?: ConvertAction;
 }) {
   const { t } = useTranslation();
   const ids = groups.map((g) => g.id);
@@ -61,6 +69,23 @@ function OrphanSection({
                   </span>
                 </div>
                 <span className="group-dir">{group.dir}</span>
+                {convert && group.raws[0] && (
+                  <button
+                    type="button"
+                    className="orphan-convert"
+                    disabled={convert.busyPath !== null}
+                    onClick={(e) => {
+                      // The row is a <label>; keep the click off the checkbox.
+                      e.preventDefault();
+                      e.stopPropagation();
+                      convert.run(group.raws[0].path);
+                    }}
+                  >
+                    {convert.busyPath === group.raws[0].path
+                      ? t('convert.working')
+                      : t('convert.toJpg')}
+                  </button>
+                )}
               </label>
             </li>
           ))}
@@ -78,6 +103,7 @@ export function OrphanScreen() {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failedCount, setFailedCount] = useState<number | null>(null);
+  const { convert, busyPath } = useConvertRaw();
 
   const rawOrphans = useMemo(
     () => scanResult?.groups.filter((g) => g.status === 'rawOnly') ?? [],
@@ -150,6 +176,7 @@ export function OrphanScreen() {
         selected={selected}
         onToggle={toggle}
         onSelectAll={selectAll}
+        convert={{ run: (rawPath) => void convert(rawPath), busyPath }}
       />
       <OrphanSection
         title={t('orphans.jpgSection')}

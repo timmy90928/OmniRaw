@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { ScanResult } from '../types';
 
 interface CullState {
   currentIndex: number;
@@ -15,6 +16,12 @@ interface CullState {
   toggleFile: (groupId: string, path: string) => void;
   unmark: (groupId: string) => void;
   clearMarks: () => void;
+  /**
+   * Reconciles marks against a fresh scan (used by refresh): keeps marks for
+   * files that still exist, drops marks for deleted files / vanished groups,
+   * and clamps the cursor to the new group count.
+   */
+  reconcileMarks: (result: ScanResult) => void;
 }
 
 function withGroupSet(
@@ -59,4 +66,23 @@ export const useCullStore = create<CullState>((set) => ({
       return { marked: next };
     }),
   clearMarks: () => set({ marked: new Map() }),
+  reconcileMarks: (result) =>
+    set((s) => {
+      const currentIndex = Math.min(s.currentIndex, Math.max(result.groups.length - 1, 0));
+      if (s.marked.size === 0) return { currentIndex };
+      const present = new Map(
+        result.groups.map((g) => [
+          g.id,
+          new Set([...g.raws, ...g.others].map((f) => f.path)),
+        ]),
+      );
+      const next = new Map<string, Set<string>>();
+      for (const [groupId, paths] of s.marked) {
+        const groupPaths = present.get(groupId);
+        if (!groupPaths) continue;
+        const kept = new Set([...paths].filter((p) => groupPaths.has(p)));
+        if (kept.size > 0) next.set(groupId, kept);
+      }
+      return { marked: next, currentIndex };
+    }),
 }));

@@ -8,6 +8,7 @@ const NAV_ITEMS: { view: View; labelKey: string }[] = [
   { view: 'review', labelKey: 'nav.review' },
   { view: 'orphans', labelKey: 'nav.orphans' },
   { view: 'settings', labelKey: 'nav.settings' },
+  { view: 'about', labelKey: 'nav.about' },
 ];
 
 export function Sidebar() {

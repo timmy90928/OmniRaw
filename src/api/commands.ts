@@ -39,6 +39,11 @@ export function deleteFiles(paths: string[]): Promise<DeletionReport> {
   return invoke<DeletionReport>('delete_files', { paths });
 }
 
+/** Exports a RAW's embedded preview to a sibling JPG; resolves to the new path. */
+export function convertRawToJpg(path: string): Promise<string> {
+  return invoke<string>('convert_raw_to_jpg', { path });
+}
+
 const metadataCache = new Map<string, ExifData>();
 
 export async function getMetadata(path: string): Promise<ExifData> {

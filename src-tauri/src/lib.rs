@@ -18,13 +18,23 @@ use thumbs::ThumbService;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(log::LevelFilter::Info)
                 .build(),
-        )
+        );
+
+    // Auto-updater and process-relaunch are desktop-only.
+    #[cfg(desktop)]
+    {
+        builder = builder
+            .plugin(tauri_plugin_updater::Builder::new().build())
+            .plugin(tauri_plugin_process::init());
+    }
+
+    builder
         .register_asynchronous_uri_scheme_protocol("omniraw", protocol::handle)
         .setup(|app| {
             let config_path = app
@@ -59,6 +69,7 @@ pub fn run() {
             commands::media::get_metadata,
             commands::delete::commit_deletions,
             commands::delete::delete_files,
+            commands::convert::convert_raw_to_jpg,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

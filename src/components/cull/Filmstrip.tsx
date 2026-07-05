@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useCullStore } from '../../stores/cullStore';
-import { GroupThumb } from '../common/GroupThumb';
+import { requestThumbnails } from '../../api/commands';
+import { GroupThumb, representativeFile } from '../common/GroupThumb';
 import type { PairGroup } from '../../types';
 
 export function Filmstrip({
@@ -23,6 +24,13 @@ export function Filmstrip({
   const WINDOW = 25;
   const start = Math.max(0, currentIndex - WINDOW);
   const end = Math.min(groups.length, currentIndex + WINDOW + 1);
+
+  useEffect(() => {
+    // Warm thumbnails for the windowed strip instead of generating them
+    // one-by-one on demand as each <img> scrolls into view.
+    const paths = groups.slice(start, end).map((g) => representativeFile(g).path);
+    if (paths.length > 0) void requestThumbnails(paths);
+  }, [start, end, groups]);
 
   return (
     <div ref={stripRef} className="filmstrip">

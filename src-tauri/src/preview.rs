@@ -4,7 +4,7 @@ use std::path::Path;
 
 use image::codecs::jpeg::JpegEncoder;
 use image::DynamicImage;
-use rawler::analyze::{extract_preview_pixels, extract_thumbnail_pixels};
+use rawler::analyze::{extract_full_pixels, extract_preview_pixels, extract_thumbnail_pixels};
 use rawler::decoders::RawDecodeParams;
 
 use crate::error::AppError;
@@ -13,6 +13,8 @@ use crate::model::FileKind;
 pub const THUMB_MAX_EDGE: u32 = 256;
 pub const PREVIEW_MAX_EDGE: u32 = 2560;
 const JPEG_QUALITY: u8 = 85;
+/// Full-resolution RAW→JPG export: higher quality than screen previews, no downscale.
+const EXPORT_JPEG_QUALITY: u8 = 92;
 
 /// Extensions the `image` crate cannot decode; callers show a placeholder.
 pub fn is_undecodable(ext: &str) -> bool {
@@ -38,6 +40,25 @@ pub fn generate_thumbnail(path: &Path, kind: FileKind) -> Result<Vec<u8>, AppErr
 pub fn generate_preview(path: &Path, kind: FileKind) -> Result<Vec<u8>, AppError> {
     let img = load_image(path, kind, false)?;
     encode_jpeg(downscale(img, PREVIEW_MAX_EDGE))
+}
+
+/// Exports a RAW's largest embedded JPEG preview as a standalone full-quality
+/// JPEG (no downscale). Uses the embedded preview — fast, camera colors, and
+/// already correctly oriented — rather than a full sensor demosaic. Prefers the
+/// full-size embedded image, falling back to the preview image.
+pub fn export_embedded_jpeg(path: &Path) -> Result<Vec<u8>, AppError> {
+    let path = path.to_path_buf();
+    // rawler may panic on corrupt files — contain it.
+    let result = catch_unwind(AssertUnwindSafe(move || {
+        let params = RawDecodeParams::default();
+        extract_full_pixels(&path, &params).or_else(|_| extract_preview_pixels(&path, &params))
+    }));
+    let img = match result {
+        Ok(Ok(img)) => img,
+        Ok(Err(e)) => return Err(AppError::Other(format!("raw preview extract failed: {e}"))),
+        Err(_) => return Err(AppError::Other("raw decoder panicked".into())),
+    };
+    encode_jpeg_quality(img, EXPORT_JPEG_QUALITY)
 }
 
 fn load_image(path: &Path, kind: FileKind, small: bool) -> Result<DynamicImage, AppError> {
@@ -82,11 +103,15 @@ fn downscale(img: DynamicImage, max_edge: u32) -> DynamicImage {
 }
 
 fn encode_jpeg(img: DynamicImage) -> Result<Vec<u8>, AppError> {
-    // JPEG has no alpha channel; normalize to RGB8.
+    encode_jpeg_quality(img, JPEG_QUALITY)
+}
+
+fn encode_jpeg_quality(img: DynamicImage, quality: u8) -> Result<Vec<u8>, AppError> {
+    // JPEG has no alpha channel; normalize to RGB8 (also flattens 16-bit RGB).
     let rgb = DynamicImage::ImageRgb8(img.to_rgb8());
     let mut buf = Vec::new();
     let mut cursor = Cursor::new(&mut buf);
-    let encoder = JpegEncoder::new_with_quality(&mut cursor, JPEG_QUALITY);
+    let encoder = JpegEncoder::new_with_quality(&mut cursor, quality);
     rgb.write_with_encoder(encoder)
         .map_err(|e| AppError::Other(format!("jpeg encode failed: {e}")))?;
     Ok(buf)

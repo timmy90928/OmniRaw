@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
 import { useCullStore } from '../../stores/cullStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useGlobalHotkeys } from '../../hooks/useGlobalHotkeys';
+import { previewUrl } from '../../api/imageUrl';
 import { groupFiles } from '../../utils/marks';
 import { EmptyState } from '../common/EmptyState';
 import { PreviewPane } from './PreviewPane';
@@ -74,6 +75,23 @@ export function CullView() {
   }, [group, files, groups.length, setView]);
 
   useGlobalHotkeys(hotkeys);
+
+  // Warm the WebView cache for the neighbouring previews so ←/→ is instant.
+  // Held in a ref so the in-flight requests aren't garbage-collected early.
+  const preloadRef = useRef<HTMLImageElement[]>([]);
+  useEffect(() => {
+    const imgs: HTMLImageElement[] = [];
+    for (const idx of [currentIndex + 1, currentIndex - 1]) {
+      const neighbour = groups[idx];
+      if (!neighbour) continue;
+      const first = groupFiles(neighbour)[0];
+      if (!first) continue;
+      const img = new Image();
+      img.src = previewUrl(first.path, first.mtimeMs);
+      imgs.push(img);
+    }
+    preloadRef.current = imgs;
+  }, [currentIndex, groups]);
 
   if (!scanResult || groups.length === 0 || !group || !file) {
     return <EmptyState title={t('cull.title')} message={t('cull.empty')} />;

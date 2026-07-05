@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
 import { useThumbStore } from '../../stores/thumbStore';
@@ -13,10 +13,14 @@ export function BrowseScreen() {
   const scanning = useLibraryStore((s) => s.scanning);
   const scanProgress = useLibraryStore((s) => s.scanProgress);
   const openFolder = useOpenFolder();
+  const prevRootRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!scanResult) return;
-    // New folder → stale thumb statuses and marks no longer apply.
+    // Only a new/changed folder invalidates thumbs and marks. An in-place
+    // refresh of the same root reuses them (marks already reconciled).
+    if (prevRootRef.current === scanResult.root) return;
+    prevRootRef.current = scanResult.root;
     useThumbStore.getState().reset();
     useCullStore.getState().clearMarks();
     useCullStore.getState().setIndex(0);

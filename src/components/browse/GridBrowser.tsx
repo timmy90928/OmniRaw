@@ -3,7 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
 import { useCullStore } from '../../stores/cullStore';
-import { requestThumbnails } from '../../api/commands';
+import { requestThumbnails, clearThumbnailQueue } from '../../api/commands';
 import { GroupThumb, representativeFile } from '../common/GroupThumb';
 import { StatusBadge } from './StatusBadge';
 import { MarkBadge } from '../common/MarkBadge';
@@ -50,7 +50,13 @@ export function GridBrowser({ groups }: { groups: PairGroup[] }) {
     const visible = groups
       .slice(firstRow * columns, (lastRow + 1) * columns)
       .map((g) => representativeFile(g).path);
-    if (visible.length > 0) void requestThumbnails(visible);
+    if (visible.length === 0) return;
+    // Debounce scroll bursts, then drop jobs for rows we've scrolled past
+    // (they'd otherwise starve the current viewport) before warming it.
+    const id = setTimeout(() => {
+      void clearThumbnailQueue().then(() => requestThumbnails(visible));
+    }, 80);
+    return () => clearTimeout(id);
   }, [firstRow, lastRow, columns, groups]);
 
   const openCull = (index: number) => {

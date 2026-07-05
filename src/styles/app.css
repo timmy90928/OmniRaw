@@ -398,6 +398,49 @@ button.primary:disabled {
   background: #b45309;
 }
 
+.convert-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.convert-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.convert-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.orphan-convert {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.orphan-convert:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+
+.orphan-convert:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .exif-panel {
   width: 260px;
   flex-shrink: 0;
@@ -552,9 +595,50 @@ button.primary:disabled {
   opacity: 0.4;
 }
 
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.status-root {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-refresh {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.status-refresh:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.status-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .status-right {
   display: flex;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .status-marked {
@@ -784,6 +868,91 @@ button.danger {
 .settings-hint {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/* ---------- About ---------- */
+
+.about-screen {
+  overflow-y: auto;
+}
+
+.about-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.about-app-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.about-version {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.about-update {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.about-update .primary {
+  margin-top: 0;
+}
+
+.about-available {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.about-status {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.about-status.error {
+  color: var(--danger);
+}
+
+.about-changelog-title {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.about-changelog {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.about-changelog h3 {
+  font-size: 14px;
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+
+.about-changelog h4 {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.about-changelog p {
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.about-changelog-list {
+  margin: 0 0 8px 18px;
+}
+
+.about-changelog-list li {
+  margin-bottom: 3px;
 }
 
 .settings-actions {

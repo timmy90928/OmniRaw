@@ -26,7 +26,14 @@ export const useLibraryStore = create<LibraryState>((set) => ({
   startScan: () => set({ scanning: true, scanProgress: 0 }),
   setScanProgress: (scannedFiles) => set({ scanProgress: scannedFiles }),
   setScanResult: (result) =>
-    set({ scanRoot: result.root, scanResult: result, scanning: false, view: 'browse' }),
+    set((s) => ({
+      scanRoot: result.root,
+      scanResult: result,
+      scanning: false,
+      // Opening a new/different folder jumps to Browse; an in-place refresh of
+      // the same root keeps the user on whatever screen they were on.
+      view: s.scanRoot === result.root ? s.view : 'browse',
+    })),
   scanFailed: () => set({ scanning: false }),
   applyDeletions: (trashedPaths) =>
     set((s) => {
