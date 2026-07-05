@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf, Prefix};
 
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
@@ -8,6 +8,22 @@ use crate::model::{DeleteMode, DeletionReport, DeletionRequest, FailedItem, Pair
 use crate::state::AppState;
 
 const BATCH_SIZE: usize = 50;
+
+/// Windows network (UNC) shares have no Recycle Bin. Passing such a path to
+/// `trash` either fails cryptically (the shell can't resolve the `\\?\UNC\`
+/// form) or permanently deletes the file — both unacceptable for a
+/// recycle-bin-only tool. Detect these so we can refuse them cleanly.
+fn is_network_path(path: &Path) -> bool {
+    matches!(
+        path.components().next(),
+        Some(Component::Prefix(p)) if matches!(p.kind(), Prefix::UNC(..) | Prefix::VerbatimUNC(..))
+    )
+}
+
+/// Marker prefix on `FailedItem.error` so the frontend can show a translated
+/// "network share not supported" hint instead of the raw string.
+pub const NETWORK_UNSUPPORTED: &str =
+    "network-unsupported: network shares have no Recycle Bin; copy the files to a local drive to delete them";
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -68,6 +84,11 @@ async fn trash_paths(
     let mut validated: Vec<PathBuf> = Vec::with_capacity(paths.len());
     for raw in paths {
         match state.ensure_in_scan_root(Path::new(&raw)) {
+            // Refuse network paths up front — never risk a permanent delete.
+            Ok(p) if is_network_path(&p) => report.failed.push(FailedItem {
+                path: p.to_string_lossy().into_owned(),
+                error: NETWORK_UNSUPPORTED.to_string(),
+            }),
             Ok(p) => validated.push(p),
             Err(e) => report.failed.push(FailedItem {
                 path: raw,
@@ -167,5 +188,15 @@ mod tests {
         let mut g = group();
         g.others.clear();
         assert!(expand_request(&g, DeleteMode::NonRawOnly).is_empty());
+    }
+
+    // UNC prefixes only parse into Prefix::(Verbatim)UNC on Windows targets.
+    #[cfg(windows)]
+    #[test]
+    fn detects_unc_network_paths() {
+        assert!(is_network_path(Path::new(r"\\?\UNC\140.0.0.1\temp\a.jpg")));
+        assert!(is_network_path(Path::new(r"\\server\share\a.jpg")));
+        assert!(!is_network_path(Path::new(r"\\?\C:\photos\a.jpg")));
+        assert!(!is_network_path(Path::new(r"C:\photos\a.jpg")));
     }
 }

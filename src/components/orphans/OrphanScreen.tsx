@@ -4,10 +4,11 @@ import { useLibraryStore } from '../../stores/libraryStore';
 import { useToastStore } from '../../stores/toastStore';
 import { deleteFiles } from '../../api/commands';
 import { useConvertRaw } from '../../hooks/useConvertRaw';
+import { isNetworkFailure } from '../../utils/deletion';
 import { EmptyState } from '../common/EmptyState';
 import { GroupThumb } from '../common/GroupThumb';
 import { ConfirmDialog } from '../common/ConfirmDialog';
-import type { PairGroup } from '../../types';
+import type { FailedItem, PairGroup } from '../../types';
 
 interface ConvertAction {
   run: (rawPath: string) => void;
@@ -102,7 +103,7 @@ export function OrphanScreen() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [failedCount, setFailedCount] = useState<number | null>(null);
+  const [failed, setFailed] = useState<FailedItem[]>([]);
   const { convert, busyPath } = useConvertRaw();
 
   const rawOrphans = useMemo(
@@ -143,7 +144,7 @@ export function OrphanScreen() {
     try {
       const report = await deleteFiles(selectedPaths);
       applyDeletions(report.trashed);
-      setFailedCount(report.failed.length);
+      setFailed(report.failed);
       setSelected(new Set());
     } catch (err) {
       console.error('orphan deletion failed', err);
@@ -167,8 +168,13 @@ export function OrphanScreen() {
           {t('orphans.deleteSelected', { count: selectedPaths.length })}
         </button>
       </header>
-      {failedCount !== null && failedCount > 0 && (
-        <p className="review-failed">{t('review.resultFailed', { count: failedCount })}</p>
+      {failed.length > 0 && (
+        <div className="review-failed">
+          <p>{t('review.resultFailed', { count: failed.length })}</p>
+          {failed.some((f) => isNetworkFailure(f.error)) && (
+            <p className="review-network-hint">{t('errors.networkNoTrash')}</p>
+          )}
+        </div>
       )}
       <OrphanSection
         title={t('orphans.rawSection')}

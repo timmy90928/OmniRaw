@@ -88,7 +88,9 @@
   },
   "errors": {
     "scanFailed": "Scan failed — check that the folder is accessible.",
-    "deleteFailed": "Deletion failed, please try again."
+    "deleteFailed": "Deletion failed, please try again.",
+    "networkNoTrash": "Network (UNC) shares have no Recycle Bin, so files can't be deleted safely. Copy them to a local drive first.",
+    "networkNoTrashShort": "Network share — no Recycle Bin"
   },
   "about": {
     "title": "About OmniRaw",

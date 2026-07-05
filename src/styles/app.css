@@ -765,6 +765,15 @@ button.danger {
   margin-top: 4px;
 }
 
+.review-network-hint {
+  margin: 4px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 13px;
+}
+
 .orphan-section header {
   display: flex;
   align-items: center;
@@ -969,7 +978,10 @@ button.danger {
 }
 
 .settings-actions button.primary {
-  border: none;
+  /* Keep the 1px border box so it's the same size as the plain button next to
+     it, and cancel the global `button.primary` top margin in this flex row. */
+  margin-top: 0;
+  border: 1px solid var(--accent);
   background: var(--accent);
   color: #fff;
 }

@@ -88,7 +88,9 @@
   },
   "errors": {
     "scanFailed": "掃描失敗,請確認資料夾可存取。",
-    "deleteFailed": "刪除失敗,請稍後再試。"
+    "deleteFailed": "刪除失敗,請稍後再試。",
+    "networkNoTrash": "網路磁碟 (UNC) 沒有資源回收桶,無法安全刪除。請先把檔案複製到本機磁碟再刪除。",
+    "networkNoTrashShort": "網路磁碟不支援回收桶"
   },
   "about": {
     "title": "關於 OmniRaw",

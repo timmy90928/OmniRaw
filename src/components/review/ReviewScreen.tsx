@@ -8,6 +8,7 @@ import { EmptyState } from '../common/EmptyState';
 import { GroupThumb } from '../common/GroupThumb';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { groupFiles } from '../../utils/marks';
+import { isNetworkFailure } from '../../utils/deletion';
 import { useToastStore } from '../../stores/toastStore';
 import type { DeletionReport } from '../../types';
 
@@ -70,10 +71,13 @@ export function ReviewScreen() {
         {report.failed.length > 0 && (
           <div className="review-failed">
             <p>{t('review.resultFailed', { count: report.failed.length })}</p>
+            {report.failed.some((f) => isNetworkFailure(f.error)) && (
+              <p className="review-network-hint">{t('errors.networkNoTrash')}</p>
+            )}
             <ul>
               {report.failed.map((f) => (
                 <li key={f.path}>
-                  {f.path} — {f.error}
+                  {f.path} — {isNetworkFailure(f.error) ? t('errors.networkNoTrashShort') : f.error}
                 </li>
               ))}
             </ul>
