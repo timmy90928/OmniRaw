@@ -1,6 +1,15 @@
 // Mirrors Rust DTOs in src-tauri/src/model.rs (kept in sync by hand).
 
-export type View = 'welcome' | 'browse' | 'cull' | 'review' | 'orphans' | 'settings' | 'about';
+export type View =
+  | 'welcome'
+  | 'browse'
+  | 'cull'
+  | 'compare'
+  | 'similar'
+  | 'review'
+  | 'orphans'
+  | 'settings'
+  | 'about';
 
 export type FileKind = 'raw' | 'nonRaw';
 
@@ -40,7 +49,13 @@ export interface AppConfig {
   language: 'zh-TW' | 'en';
   /** Pair exported variants (IMG_0001-1.jpg / IMG_0001_edit.jpg) into the RAW's group. */
   matchExportedSuffixes: boolean;
+  /** Pair matching basenames found in configured sibling folders. */
+  matchSiblingFolders: boolean;
+  siblingFolderNames: string[];
 }
+
+export type GroupSort = 'nameAsc' | 'nameDesc' | 'newest' | 'oldest' | 'largest';
+export type GroupFilter = 'all' | GroupStatus;
 
 export interface ExifData {
   cameraMake?: string;
@@ -73,4 +88,32 @@ export interface FailedItem {
 export interface DeletionReport {
   trashed: string[];
   failed: FailedItem[];
+}
+
+export interface DeletionOperation {
+  timestampMs: number;
+  scanRoot: string;
+  requested: string[];
+  trashed: string[];
+  failed: FailedItem[];
+}
+
+export interface DeletionHistory {
+  operations: DeletionOperation[];
+  logPath: string;
+  manifestPath: string;
+}
+
+export interface XmpWriteResult {
+  path: string;
+  rating: number;
+}
+
+export type SimilarityKind = 'burst' | 'nearDuplicate';
+
+export interface SimilarityCluster {
+  id: string;
+  kind: SimilarityKind;
+  groupIds: string[];
+  score: number;
 }

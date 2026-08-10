@@ -5,6 +5,8 @@
   "nav": {
     "browse": "瀏覽",
     "cull": "選片",
+    "compare": "比較",
+    "similar": "連拍／相似",
     "review": "審閱",
     "orphans": "孤兒清理",
     "settings": "設定",
@@ -22,7 +24,35 @@
     "summary": "共 {{total}} 組:{{complete}} 組完整配對、{{rawOnly}} 組僅 RAW、{{nonRawOnly}} 組僅非 RAW(略過 {{skipped}} 個非影像檔)",
     "statusComplete": "配對",
     "statusRawOnly": "僅 RAW",
-    "statusNonRawOnly": "僅 JPG"
+    "statusNonRawOnly": "僅 JPG",
+    "storageStats": "空間統計",
+    "librarySize": "影像總容量 {{size}}",
+    "reclaimable": "標記後可釋放 {{size}}",
+    "searchPlaceholder": "搜尋檔名或路徑…",
+    "filterAll": "所有配對狀態",
+    "sortNameAsc": "名稱 A → Z",
+    "sortNameDesc": "名稱 Z → A",
+    "sortNewest": "最新優先",
+    "sortOldest": "最舊優先",
+    "sortLargest": "最大優先",
+    "compareSelected": "比較已選（{{count}}/4）",
+    "toggleCompare": "加入或移出比較"
+  },
+  "compare": {
+    "title": "並排比較",
+    "empty": "請先在瀏覽頁選取 2 至 4 組照片。",
+    "hint": "同步並排檢視 2 至 4 張照片，適合比較對焦與表情。",
+    "back": "回到瀏覽",
+    "clear": "清除選取"
+  },
+  "similar": {
+    "title": "連拍與近似照片",
+    "noFolder": "請先開啟照片資料夾。",
+    "empty": "沒有偵測到連拍或近似照片群組。",
+    "hint": "以檔案時間與 64-bit 感知雜湊分群；點照片可進入選片。",
+    "burst": "連拍群組",
+    "nearDuplicate": "近似照片",
+    "score": "相似度 {{score}}%"
   },
   "cull": {
     "title": "選片",
@@ -75,6 +105,10 @@
     "defaultDeleteModeHint": "選片時按 Delete 使用的標記模式",
     "matchExportedSuffixes": "輸出檔自動歸組",
     "matchExportedSuffixesHint": "IMG_0001_edit.jpg 這類後綴檔自動歸入 IMG_0001 的組",
+    "matchSiblingFolders": "跨同層資料夾配對",
+    "siblingFolderNames": "可配對的資料夾名稱",
+    "matchSiblingFoldersHint": "以逗號分隔；例如 RAW/IMG_1.CR3 可與 JPEG/IMG_1.jpg 配對。儲存後需重新掃描。",
+    "savePairing": "儲存配對設定",
     "rawExtensions": "RAW 副檔名",
     "nonRawExtensions": "非 RAW 副檔名",
     "addExtension": "新增…",
@@ -103,6 +137,10 @@
     "downloading": "下載中… {{percent}}%",
     "updateError": "檢查更新失敗,請確認網路連線。",
     "updateHint": "自動更新只在正式安裝版生效;開發模式 (dev) 無法檢查。",
+    "deletionAudit": "刪除操作紀錄",
+    "deletionOperations": "已記錄 {{count}} 次操作",
+    "auditLog": "逐筆日誌",
+    "auditManifest": "最新版 manifest",
     "changelog": "版本記錄"
   },
   "status": {
@@ -110,6 +148,11 @@
     "groups": "{{count}} 組",
     "marked": "已標記 {{count}}",
     "refresh": "重新整理 (F5)"
+  },
+  "statusLabels": {
+    "complete": "完整配對",
+    "rawOnly": "僅 RAW",
+    "nonRawOnly": "僅非 RAW"
   },
   "exif": {
     "camera": "相機",
@@ -121,6 +164,14 @@
     "dateTaken": "拍攝時間",
     "dimensions": "尺寸",
     "fileSize": "檔案大小"
+  },
+  "xmp": {
+    "title": "XMP 評分",
+    "reject": "Reject",
+    "rated": "已建立 {{rating}} 星 XMP sidecar。",
+    "rejected": "已建立 Reject XMP sidecar。",
+    "failed": "無法寫入 XMP：{{error}}",
+    "safeHint": "若 sidecar 已存在，OmniRaw 會拒絕覆寫。"
   },
   "common": {
     "cancel": "取消",

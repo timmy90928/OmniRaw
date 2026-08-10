@@ -5,6 +5,8 @@ import type { View } from '../../types';
 const NAV_ITEMS: { view: View; labelKey: string }[] = [
   { view: 'browse', labelKey: 'nav.browse' },
   { view: 'cull', labelKey: 'nav.cull' },
+  { view: 'compare', labelKey: 'nav.compare' },
+  { view: 'similar', labelKey: 'nav.similar' },
   { view: 'review', labelKey: 'nav.review' },
   { view: 'orphans', labelKey: 'nav.orphans' },
   { view: 'settings', labelKey: 'nav.settings' },

@@ -18,10 +18,23 @@ pub struct AppConfig {
     /// into the `IMG_0001.CR3` group (longest-prefix match on RAW basenames).
     #[serde(default = "default_true")]
     pub match_exported_suffixes: bool,
+    /// Pair matching basenames across well-known sibling directories such as
+    /// `RAW/` and `JPEG/`. Disabled by default to preserve exact-dir behavior.
+    #[serde(default)]
+    pub match_sibling_folders: bool,
+    #[serde(default = "default_sibling_folder_names")]
+    pub sibling_folder_names: Vec<String>,
 }
 
 fn default_true() -> bool {
     true
+}
+
+fn default_sibling_folder_names() -> Vec<String> {
+    ["raw", "jpeg", "jpg", "exports", "edited"]
+        .into_iter()
+        .map(str::to_string)
+        .collect()
 }
 
 impl Default for AppConfig {
@@ -38,6 +51,8 @@ impl Default for AppConfig {
             default_delete_mode: DeleteMode::Pair,
             language: "zh-TW".to_string(),
             match_exported_suffixes: true,
+            match_sibling_folders: false,
+            sibling_folder_names: default_sibling_folder_names(),
         }
     }
 }
@@ -73,6 +88,18 @@ impl AppConfig {
             return Err(AppError::InvalidConfig(format!(
                 "extension appears in both lists: {dup}"
             )));
+        }
+        let mut seen_folders = HashSet::new();
+        self.sibling_folder_names = self
+            .sibling_folder_names
+            .iter()
+            .map(|name| name.trim().to_lowercase())
+            .filter(|name| !name.is_empty() && seen_folders.insert(name.clone()))
+            .collect();
+        if self.match_sibling_folders && self.sibling_folder_names.is_empty() {
+            return Err(AppError::InvalidConfig(
+                "sibling folder list must not be empty when matching is enabled".into(),
+            ));
         }
         Ok(())
     }

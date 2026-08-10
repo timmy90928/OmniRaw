@@ -40,6 +40,7 @@ jobs:
           workspaces: src-tauri
 
       - run: npm ci
+
       - run: npm test
       - run: npm run build
       - run: npm audit --audit-level=high
@@ -93,6 +94,23 @@ jobs:
 
       - run: npm ci
 
+      - name: Import Apple Developer ID certificate
+        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERTIFICATE_PATH="$RUNNER_TEMP/omniraw-certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/omniraw-signing.keychain-db"
+          echo -n "$APPLE_CERTIFICATE" | base64 --decode -o "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -100,11 +118,30 @@ jobs:
           # Add these as repository secrets before merging to main / tagging.
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Developer ID signing + Apple notarization. Tauri detects these
+          # variables automatically; builds remain unsigned when they are absent.
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           # On tag pushes, create a GitHub Release with the bundles attached.
           tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
           releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('OmniRaw {0}', github.ref_name) || '' }}
           args: ${{ matrix.args }}
+
+      - name: Smoke-test Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          REQUIRE_WINDOWS_SIGNING: ${{ secrets.WINDOWS_SIGNING_REQUIRED }}
+        run: .github/scripts/smoke-windows.ps1
+
+      - name: Smoke-test macOS disk image
+        if: runner.os == 'macOS'
+        env:
+          REQUIRE_APPLE_SIGNING: ${{ secrets.APPLE_SIGNING_IDENTITY != '' }}
+        run: bash .github/scripts/smoke-macos.sh
 
       # For non-tag runs, expose the bundles as workflow artifacts.
       - uses: actions/upload-artifact@v4

@@ -10,6 +10,16 @@ export function onScanProgress(
   return listen<ScanProgressPayload>('scan://progress', (event) => handler(event.payload));
 }
 
+export interface ScanChangedPayload {
+  paths: string[];
+}
+
+export function onScanChanged(
+  handler: (payload: ScanChangedPayload) => void,
+): Promise<UnlistenFn> {
+  return listen<ScanChangedPayload>('scan://changed', (event) => handler(event.payload));
+}
+
 export interface ThumbReadyPayload {
   path: string;
 }

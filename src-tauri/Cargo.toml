@@ -30,14 +30,22 @@ rayon = "1"
 blake3 = "1"
 base64 = "0.22"
 log = "0.4"
+notify = "8"
+tempfile = "3"
 # canonicalize without Windows \\?\ verbatim prefixes
 dunce = "1"
 # Desktop auto-update: check/download/install signed releases, then relaunch.
 tauri-plugin-updater = "2.10.1"
 tauri-plugin-process = "2.3.1"
 
-[dev-dependencies]
-tempfile = "3"
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_System_Com",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+] }
 
 # Image decoding is CPU-bound; unoptimized deps make dev thumbnails 5-20x
 # slower than release. Optimize dependencies only — our own crate still

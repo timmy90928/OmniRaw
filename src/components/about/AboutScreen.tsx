@@ -6,6 +6,8 @@ import { check, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { useToastStore } from '../../stores/toastStore';
 import changelog from '../../../CHANGELOG.md?raw';
+import { getDeletionHistory } from '../../api/commands';
+import type { DeletionHistory } from '../../types';
 
 type UpdateState = 'idle' | 'checking' | 'uptodate' | 'available' | 'downloading' | 'error';
 
@@ -56,11 +58,16 @@ export function AboutScreen() {
   const [newVersion, setNewVersion] = useState('');
   const [progress, setProgress] = useState(0);
   const updateRef = useRef<Update | null>(null);
+  const [history, setHistory] = useState<DeletionHistory | null>(null);
 
   useEffect(() => {
     void getVersion()
       .then(setVersion)
       .catch(() => setVersion(''));
+  }, []);
+
+  useEffect(() => {
+    void getDeletionHistory().then(setHistory).catch(() => setHistory(null));
   }, []);
 
   const runCheck = async () => {
@@ -118,6 +125,19 @@ export function AboutScreen() {
             {version ? t('about.version', { version }) : t('common.loading')}
           </span>
         </div>
+      </section>
+
+      <section className="settings-section column">
+        <h2 className="about-changelog-title">{t('about.deletionAudit')}</h2>
+        <span className="about-status">
+          {t('about.deletionOperations', { count: history?.operations.length ?? 0 })}
+        </span>
+        {history && (
+          <dl className="audit-paths">
+            <dt>{t('about.auditLog')}</dt><dd>{history.logPath}</dd>
+            <dt>{t('about.auditManifest')}</dt><dd>{history.manifestPath}</dd>
+          </dl>
+        )}
       </section>
 
       <section className="settings-section column">

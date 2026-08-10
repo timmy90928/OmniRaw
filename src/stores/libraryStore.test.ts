@@ -29,6 +29,7 @@ describe('libraryStore deletion reconciliation', () => {
       scanResult: null,
       scanning: false,
       scanProgress: 0,
+      comparedGroupIds: new Set(),
     });
   });
 
@@ -49,5 +50,14 @@ describe('libraryStore deletion reconciliation', () => {
     expect(useLibraryStore.getState().scanResult?.groups).toEqual([
       expect.objectContaining({ id: 'partial', status: 'rawOnly', others: [] }),
     ]);
+  });
+
+  it('limits side-by-side comparison to four groups and toggles selections', () => {
+    for (const id of ['a', 'b', 'c', 'd', 'e']) useLibraryStore.getState().toggleCompared(id);
+    expect([...useLibraryStore.getState().comparedGroupIds]).toEqual(['a', 'b', 'c', 'd']);
+    useLibraryStore.getState().toggleCompared('b');
+    expect(useLibraryStore.getState().comparedGroupIds.has('b')).toBe(false);
+    useLibraryStore.getState().toggleCompared('e');
+    expect(useLibraryStore.getState().comparedGroupIds.has('e')).toBe(true);
   });
 });

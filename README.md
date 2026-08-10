@@ -18,9 +18,16 @@ If you shoot RAW+JPEG, most viewers let you cull by browsing JPGs — but deleti
 - **Recycle-bin only** — every deletion goes to the OS Recycle Bin / Trash. Nothing is permanently deleted; everything is recoverable.
 - **Orphan cleanup** — dedicated screen listing RAW-without-JPG and JPG-without-RAW files for batch cleanup.
 - **Refresh in place** — press **F5** (or the status-bar button) to re-scan the current folder after files change on disk; existing marks on surviving files are kept — no need to re-open the folder.
+- **Live folder monitoring** — external file changes trigger a debounced automatic refresh while keeping valid marks.
+- **Search, filter & sort** — find groups by filename/path, filter pairing status, and sort by name, date, or size; storage totals show how much marked files will reclaim.
+- **Side-by-side comparison** — select 2–4 groups in Browse and compare their large previews together.
+- **Burst & near-duplicate detection** — combines a capture-time window with a 64-bit perceptual hash to surface sequences and visually similar frames.
+- **HEIC/HEIF previews** — native ImageIO decoding on macOS and Windows Shell/WIC decoding on Windows.
+- **XMP ratings** — create 1–5 star or Reject sidecars; existing XMP files are never overwritten.
+- **Deletion audit trail** — append-only JSONL operations plus an always-current JSON manifest in the app data directory.
 - **EXIF panel** — camera, lens, shutter, aperture, ISO, focal length, capture time and dimensions (CR3 metadata included).
 - **Auto-update** — an About page shows the version and changelog, checks GitHub Releases for updates, and installs them in-app (signed updater artifacts).
-- **Configurable** — editable RAW / non-RAW extension lists, default Delete-key behavior, export-suffix grouping toggle.
+- **Configurable** — editable RAW / non-RAW extension lists, default Delete-key behavior, export-suffix grouping, and opt-in RAW/JPEG sibling-folder pairing.
 - **Bilingual UI** — 繁體中文 (default) and English, switchable at runtime.
 
 ## Download & Install
@@ -30,9 +37,10 @@ Grab the latest installer from [GitHub Releases](https://github.com/timmy90928/O
 | Platform | File | Notes |
 |---|---|---|
 | Windows 10/11 | `OmniRaw_x.y.z_x64-setup.exe` (or `.msi`) | |
-| macOS (Apple Silicon & Intel) | `OmniRaw_x.y.z_universal.dmg` | Unsigned — see below |
+| macOS (Apple Silicon & Intel) | `OmniRaw_x.y.z_universal.dmg` | Developer ID signed/notarized when release secrets are configured |
 
-> **macOS note**: builds are currently unsigned. If macOS blocks the app, clear
+> **macOS note**: builds remain unsigned until the Apple Developer secrets in
+> [`docs/release-signing.md`](docs/release-signing.md) are configured. If macOS blocks an unsigned app, clear
 > the quarantine flag after copying it to Applications:
 > `xattr -cr /Applications/OmniRaw.app`
 
@@ -73,12 +81,13 @@ photos/
 ├── IMG_0001-1.jpg      ─┘
 ├── IMG_0002.CR3         ←  RAW orphan (no JPG)
 ├── IMG_00010.jpg        ←  different photo — numeric continuation is NOT an export
-└── sub/IMG_0001.JPG     ←  different folder — never pairs across folders
+└── sub/IMG_0001.JPG     ←  different folder by default
 ```
 
 - Same folder + same basename (case-insensitive) = one group.
 - A non-RAW file whose name is *RAW basename + separator + suffix* joins that RAW's group (`-`, `_`, space, `(`, etc.). The longest matching RAW basename wins, so `IMG_0001-1-edit.jpg` pairs with `IMG_0001-1.CR3`, not `IMG_0001.CR3`.
 - Toggleable in Settings (`Auto-group exported files`).
+- Optional sibling-folder matching can pair configured names such as `RAW/IMG_0001.CR3` and `JPEG/IMG_0001.jpg`; unrelated folders remain separate.
 
 ## Configuration
 
@@ -93,9 +102,12 @@ Settings persist to a JSON file:
 | `nonRawExtensions` | jpg, jpeg, png, heic, heif, tif, tiff, webp | Treated as non-RAW |
 | `defaultDeleteMode` | `pair` | What the Delete key marks: `pair` / `nonRawOnly` / `rawOnly` |
 | `matchExportedSuffixes` | `true` | Exported-file prefix matching |
+| `matchSiblingFolders` | `false` | Pair configured sibling folder layouts |
+| `siblingFolderNames` | raw, jpeg, jpg, exports, edited | Folder names eligible for sibling pairing |
 | `language` | `zh-TW` | UI language (`zh-TW` / `en`) |
 
 Thumbnail cache lives in the platform cache dir (`%LOCALAPPDATA%\com.omniraw.app` on Windows) and is safe to delete at any time.
+Deletion audit files (`deletion-operations.jsonl` and `deletion-manifest.json`) live in the platform app-data directory and are shown on the About page.
 
 ## Development
 
@@ -125,6 +137,7 @@ Packaging is fully automated on GitHub Actions — no local `tauri build` needed
 - every `main` push / PR runs frontend tests/build, Rust fmt/Clippy/tests, and dependency audits
 - pushes to `main` produce macOS (`.dmg`, universal) and Windows (`.exe`/`.msi`) bundles as workflow artifacts
 - pushing a `v*` tag publishes a GitHub Release with all installers attached plus the signed updater artifacts (`latest.json` + `.sig`)
+- Windows MSI install/uninstall and macOS DMG mount/bundle checks run after packaging; signed macOS releases also require codesign, Gatekeeper, and notarization-ticket validation
 
 > **Updater signing**: bundling requires two repository secrets —
 > `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
@@ -145,16 +158,9 @@ Detailed layout and project conventions live in [CLAUDE.md](CLAUDE.md).
 
 ## Known limitations
 
-- **HEIC/HEIF**: shown as a placeholder (no decoder bundled in v1); metadata still works where available.
-- **macOS builds are unsigned** (no Apple Developer certificate yet) — see the install note above.
-- Pairing never crosses folder boundaries by design; a `RAW/` subfolder workflow is not yet supported.
-
-## Roadmap ideas
-
-- HEIC thumbnail decoding
-- macOS code signing & notarization
-- Sort / filter in the browse grid
-- Optional subfolder pairing (`RAW/` sidecar layout)
+- Windows HEIC/HEIF decoding requires the Microsoft HEIF Image Extensions codec; OmniRaw reports a preview error when the codec is unavailable.
+- Actual macOS Developer ID signing/notarization requires the repository owner to supply Apple-issued credentials; the CI wiring and enforcement checks are ready.
+- XMP writes are intentionally create-only. Existing sidecars are protected rather than merged automatically.
 
 ## License
 

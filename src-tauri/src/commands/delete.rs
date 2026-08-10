@@ -3,6 +3,7 @@ use std::path::{Component, Path, PathBuf, Prefix};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
+use crate::audit;
 use crate::error::AppError;
 use crate::model::{DeleteMode, DeletionReport, DeletionRequest, FailedItem, PairGroup};
 use crate::state::AppState;
@@ -80,6 +81,7 @@ async fn trash_paths(
     state: &State<'_, AppState>,
     paths: Vec<String>,
 ) -> Result<DeletionReport, AppError> {
+    let requested = paths.clone();
     let mut report = DeletionReport::default();
     let mut validated: Vec<PathBuf> = Vec::with_capacity(paths.len());
     for raw in paths {
@@ -132,7 +134,17 @@ async fn trash_paths(
 
     report.trashed.append(&mut batch_report.trashed);
     report.failed.append(&mut batch_report.failed);
+    if let Err(error) = audit::record_deletion(state, requested, &report) {
+        log::error!("failed to write deletion audit log: {error}");
+    }
     Ok(report)
+}
+
+#[tauri::command]
+pub async fn get_deletion_history(
+    state: State<'_, AppState>,
+) -> Result<crate::model::DeletionHistory, AppError> {
+    audit::read_history(&state)
 }
 
 #[cfg(test)]

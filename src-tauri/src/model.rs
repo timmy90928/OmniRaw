@@ -39,7 +39,7 @@ pub struct FileEntry {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PairGroup {
-    /// `lowercase(dir) + "|" + lowercase(basename)` — stable across rescans.
+    /// `logical dir + "|" + lowercase(basename)` — stable across rescans.
     pub id: String,
     pub dir: String,
     pub base_name: String,
@@ -78,6 +78,24 @@ pub struct DeletionReport {
     pub failed: Vec<FailedItem>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeletionOperation {
+    pub timestamp_ms: u128,
+    pub scan_root: String,
+    pub requested: Vec<String>,
+    pub trashed: Vec<String>,
+    pub failed: Vec<FailedItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeletionHistory {
+    pub operations: Vec<DeletionOperation>,
+    pub log_path: String,
+    pub manifest_path: String,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExifData {
@@ -91,4 +109,20 @@ pub struct ExifData {
     pub date_taken: Option<String>,
     pub width: Option<u32>,
     pub height: Option<u32>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SimilarityKind {
+    Burst,
+    NearDuplicate,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SimilarityCluster {
+    pub id: String,
+    pub kind: SimilarityKind,
+    pub group_ids: Vec<String>,
+    pub score: f32,
 }

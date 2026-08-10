@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
 import { useThumbStore } from '../../stores/thumbStore';
@@ -6,6 +6,23 @@ import { useCullStore } from '../../stores/cullStore';
 import { useOpenFolder } from '../../hooks/useOpenFolder';
 import { EmptyState } from '../common/EmptyState';
 import { GridBrowser } from './GridBrowser';
+import type { GroupFilter, GroupSort } from '../../types';
+
+function groupSize(group: NonNullable<ReturnType<typeof useLibraryStore.getState>['scanResult']>['groups'][number]) {
+  return [...group.raws, ...group.others].reduce((sum, file) => sum + file.size, 0);
+}
+
+function formatBytes(value: number) {
+  if (value < 1024) return `${value} B`;
+  const units = ['KB', 'MB', 'GB', 'TB'];
+  let size = value;
+  let unit = -1;
+  do {
+    size /= 1024;
+    unit += 1;
+  } while (size >= 1024 && unit < units.length - 1);
+  return `${size.toFixed(size >= 10 ? 1 : 2)} ${units[unit]}`;
+}
 
 export function BrowseScreen() {
   const { t } = useTranslation();
@@ -13,7 +30,13 @@ export function BrowseScreen() {
   const scanning = useLibraryStore((s) => s.scanning);
   const scanProgress = useLibraryStore((s) => s.scanProgress);
   const openFolder = useOpenFolder();
+  const marked = useCullStore((s) => s.marked);
+  const compared = useLibraryStore((s) => s.comparedGroupIds);
+  const setView = useLibraryStore((s) => s.setView);
   const prevRootRef = useRef<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<GroupFilter>('all');
+  const [sort, setSort] = useState<GroupSort>('nameAsc');
 
   useEffect(() => {
     if (!scanResult) return;
@@ -52,6 +75,45 @@ export function BrowseScreen() {
     { complete: 0, rawOnly: 0, nonRawOnly: 0 },
   );
 
+  const visible = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase();
+    return scanResult.groups
+      .map((group, originalIndex) => ({ group, originalIndex }))
+      .filter(({ group }) => filter === 'all' || group.status === filter)
+      .filter(({ group }) => {
+        if (!needle) return true;
+        return (
+          group.baseName.toLocaleLowerCase().includes(needle) ||
+          group.dir.toLocaleLowerCase().includes(needle) ||
+          [...group.raws, ...group.others].some((file) =>
+            file.fileName.toLocaleLowerCase().includes(needle),
+          )
+        );
+      })
+      .sort((a, b) => {
+        const aFiles = [...a.group.raws, ...a.group.others];
+        const bFiles = [...b.group.raws, ...b.group.others];
+        const newest = (files: typeof aFiles) => Math.max(...files.map((f) => f.mtimeMs), 0);
+        if (sort === 'nameDesc') return b.group.baseName.localeCompare(a.group.baseName);
+        if (sort === 'newest') return newest(bFiles) - newest(aFiles);
+        if (sort === 'oldest') return newest(aFiles) - newest(bFiles);
+        if (sort === 'largest') return groupSize(b.group) - groupSize(a.group);
+        return a.group.baseName.localeCompare(b.group.baseName);
+      });
+  }, [filter, query, scanResult.groups, sort]);
+
+  const libraryBytes = scanResult.groups.reduce((sum, group) => sum + groupSize(group), 0);
+  const reclaimableBytes = scanResult.groups.reduce((sum, group) => {
+    const paths = marked.get(group.id);
+    if (!paths) return sum;
+    return (
+      sum +
+      [...group.raws, ...group.others]
+        .filter((file) => paths.has(file.path))
+        .reduce((fileSum, file) => fileSum + file.size, 0)
+    );
+  }, 0);
+
   return (
     <div className="browse-screen">
       <header className="browse-header">
@@ -69,7 +131,38 @@ export function BrowseScreen() {
           skipped: scanResult.skippedFiles,
         })}
       </p>
-      <GridBrowser groups={scanResult.groups} />
+      <div className="browse-stats" aria-label={t('browse.storageStats')}>
+        <span>{t('browse.librarySize', { size: formatBytes(libraryBytes) })}</span>
+        <span className={reclaimableBytes > 0 ? 'reclaimable active' : 'reclaimable'}>
+          {t('browse.reclaimable', { size: formatBytes(reclaimableBytes) })}
+        </span>
+      </div>
+      <div className="browse-toolbar">
+        <input
+          type="search"
+          value={query}
+          placeholder={t('browse.searchPlaceholder')}
+          aria-label={t('browse.searchPlaceholder')}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <select value={filter} onChange={(event) => setFilter(event.target.value as GroupFilter)}>
+          <option value="all">{t('browse.filterAll')}</option>
+          <option value="complete">{t('statusLabels.complete')}</option>
+          <option value="rawOnly">{t('statusLabels.rawOnly')}</option>
+          <option value="nonRawOnly">{t('statusLabels.nonRawOnly')}</option>
+        </select>
+        <select value={sort} onChange={(event) => setSort(event.target.value as GroupSort)}>
+          <option value="nameAsc">{t('browse.sortNameAsc')}</option>
+          <option value="nameDesc">{t('browse.sortNameDesc')}</option>
+          <option value="newest">{t('browse.sortNewest')}</option>
+          <option value="oldest">{t('browse.sortOldest')}</option>
+          <option value="largest">{t('browse.sortLargest')}</option>
+        </select>
+        <button type="button" disabled={compared.size < 2} onClick={() => setView('compare')}>
+          {t('browse.compareSelected', { count: compared.size })}
+        </button>
+      </div>
+      <GridBrowser entries={visible} />
     </div>
   );
 }

@@ -7,6 +7,7 @@ use crate::error::AppError;
 use crate::model::ScanResult;
 use crate::scanner;
 use crate::state::AppState;
+use crate::watcher;
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,15 +29,20 @@ pub async fn scan_folder(
     // Store the root first so later per-path commands can validate against it.
     *state.scan_root.write().expect("scan_root lock poisoned") = Some(root_path.clone());
 
+    let progress_app = app.clone();
+    let scan_root = root_path.clone();
     let result = tauri::async_runtime::spawn_blocking(move || {
-        scanner::scan(&root_path, &config, |scanned_files| {
-            let _ = app.emit("scan://progress", ScanProgress { scanned_files });
+        scanner::scan(&scan_root, &config, |scanned_files| {
+            let _ = progress_app.emit("scan://progress", ScanProgress { scanned_files });
         })
     })
     .await
     .map_err(|e| AppError::Other(e.to_string()))??;
 
     *state.groups.write().expect("groups lock poisoned") = result.groups.clone();
+    if let Err(error) = watcher::replace_watcher(&state, app, &root_path) {
+        log::warn!("automatic folder monitoring unavailable: {error}");
+    }
 
     Ok(result)
 }

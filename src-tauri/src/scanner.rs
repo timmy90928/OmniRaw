@@ -136,7 +136,39 @@ fn is_export_of(base: &str, raw_base: &str) -> bool {
 /// `IMG_0001.CR3`); the longest matching RAW basename wins, so
 /// `IMG_0001-1-edit.jpg` prefers `IMG_0001-1.CR3` over `IMG_0001.CR3`.
 /// Deterministic output order: by dir, then basename.
+#[cfg(test)]
 pub fn build_pair_groups(entries: Vec<FileEntry>, match_exported_suffixes: bool) -> Vec<PairGroup> {
+    build_pair_groups_with_options(entries, match_exported_suffixes, false, &[])
+}
+
+fn logical_dir(dir: &str, match_sibling_folders: bool, sibling_folder_names: &[String]) -> String {
+    if !match_sibling_folders {
+        return dir.to_string();
+    }
+    let path = Path::new(dir);
+    let folder = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(str::to_lowercase);
+    if folder.as_ref().is_some_and(|name| {
+        sibling_folder_names
+            .iter()
+            .any(|candidate| candidate == name)
+    }) {
+        path.parent()
+            .map(|parent| parent.to_string_lossy().into_owned())
+            .unwrap_or_else(|| dir.to_string())
+    } else {
+        dir.to_string()
+    }
+}
+
+pub fn build_pair_groups_with_options(
+    entries: Vec<FileEntry>,
+    match_exported_suffixes: bool,
+    match_sibling_folders: bool,
+    sibling_folder_names: &[String],
+) -> Vec<PairGroup> {
     let (raw_entries, non_raw_entries): (Vec<_>, Vec<_>) =
         entries.into_iter().partition(|e| e.kind == FileKind::Raw);
 
@@ -167,6 +199,7 @@ pub fn build_pair_groups(entries: Vec<FileEntry>, match_exported_suffixes: bool)
 
     for entry in raw_entries {
         let (dir, base) = split_dir_base(&entry);
+        let dir = logical_dir(&dir, match_sibling_folders, sibling_folder_names);
         let base_l = base.to_lowercase();
         raw_bases
             .entry(dir.clone())
@@ -177,6 +210,7 @@ pub fn build_pair_groups(entries: Vec<FileEntry>, match_exported_suffixes: bool)
 
     for entry in non_raw_entries {
         let (dir, base) = split_dir_base(&entry);
+        let dir = logical_dir(&dir, match_sibling_folders, sibling_folder_names);
         let base_l = base.to_lowercase();
         let exact_id = format!("{dir}|{base_l}");
 
@@ -221,7 +255,12 @@ pub fn scan(
     on_progress: impl FnMut(usize),
 ) -> Result<ScanResult, AppError> {
     let collected = collect_files(root, config, on_progress)?;
-    let groups = build_pair_groups(collected.entries, config.match_exported_suffixes);
+    let groups = build_pair_groups_with_options(
+        collected.entries,
+        config.match_exported_suffixes,
+        config.match_sibling_folders,
+        &config.sibling_folder_names,
+    );
     Ok(ScanResult {
         root: root.to_string_lossy().into_owned(),
         groups,
@@ -435,6 +474,57 @@ mod tests {
         let config = AppConfig::default();
         let collected = collect_files(tmp.path(), &config, |_| {}).unwrap();
         let groups = build_pair_groups(collected.entries, false);
+        assert_eq!(groups.len(), 2);
+    }
+
+    #[test]
+    fn configured_sibling_folders_pair_when_enabled() {
+        let tmp = tempfile::tempdir().unwrap();
+        let raw = tmp.path().join("RAW");
+        let jpg = tmp.path().join("JPEG");
+        fs::create_dir(&raw).unwrap();
+        fs::create_dir(&jpg).unwrap();
+        touch(&raw, "IMG_0042.CR3");
+        touch(&jpg, "IMG_0042.jpg");
+
+        let config = AppConfig {
+            match_sibling_folders: true,
+            ..AppConfig::default()
+        };
+        let collected = collect_files(tmp.path(), &config, |_| {}).unwrap();
+        let groups = build_pair_groups_with_options(
+            collected.entries,
+            config.match_exported_suffixes,
+            config.match_sibling_folders,
+            &config.sibling_folder_names,
+        );
+        assert_eq!(groups.len(), 1);
+        assert_eq!(groups[0].status, GroupStatus::Complete);
+        assert_eq!(groups[0].dir, tmp.path().to_string_lossy());
+    }
+
+    #[test]
+    fn unrelated_sibling_folders_remain_separate() {
+        let entries = vec![
+            FileEntry {
+                path: "/photos/a/IMG_0001.CR3".into(),
+                file_name: "IMG_0001.CR3".into(),
+                ext: "cr3".into(),
+                kind: FileKind::Raw,
+                size: 0,
+                mtime_ms: 0,
+            },
+            FileEntry {
+                path: "/photos/b/IMG_0001.jpg".into(),
+                file_name: "IMG_0001.jpg".into(),
+                ext: "jpg".into(),
+                kind: FileKind::NonRaw,
+                size: 0,
+                mtime_ms: 0,
+            },
+        ];
+        let folders = vec!["raw".into(), "jpeg".into()];
+        let groups = build_pair_groups_with_options(entries, true, true, &folders);
         assert_eq!(groups.len(), 2);
     }
 

@@ -5,6 +5,8 @@
   "nav": {
     "browse": "Browse",
     "cull": "Cull",
+    "compare": "Compare",
+    "similar": "Bursts / Similar",
     "review": "Review",
     "orphans": "Orphan Cleanup",
     "settings": "Settings",
@@ -22,7 +24,35 @@
     "summary": "{{total}} groups: {{complete}} paired, {{rawOnly}} RAW only, {{nonRawOnly}} non-RAW only ({{skipped}} non-image files skipped)",
     "statusComplete": "Paired",
     "statusRawOnly": "RAW only",
-    "statusNonRawOnly": "JPG only"
+    "statusNonRawOnly": "JPG only",
+    "storageStats": "Storage statistics",
+    "librarySize": "Image library {{size}}",
+    "reclaimable": "{{size}} reclaimable from marks",
+    "searchPlaceholder": "Search filename or path…",
+    "filterAll": "All pair states",
+    "sortNameAsc": "Name A → Z",
+    "sortNameDesc": "Name Z → A",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "sortLargest": "Largest first",
+    "compareSelected": "Compare selected ({{count}}/4)",
+    "toggleCompare": "Add to or remove from comparison"
+  },
+  "compare": {
+    "title": "Side-by-side comparison",
+    "empty": "Select 2 to 4 photo groups in Browse first.",
+    "hint": "Compare 2 to 4 photos together for focus and expression checks.",
+    "back": "Back to Browse",
+    "clear": "Clear selection"
+  },
+  "similar": {
+    "title": "Bursts and near-duplicates",
+    "noFolder": "Open a photo folder first.",
+    "empty": "No burst or near-duplicate groups were detected.",
+    "hint": "Groups by file time and a 64-bit perceptual hash; click a photo to cull.",
+    "burst": "Burst sequence",
+    "nearDuplicate": "Near-duplicate",
+    "score": "{{score}}% similar"
   },
   "cull": {
     "title": "Cull",
@@ -75,6 +105,10 @@
     "defaultDeleteModeHint": "Mark mode applied when pressing Delete while culling",
     "matchExportedSuffixes": "Auto-group exported files",
     "matchExportedSuffixesHint": "Files like IMG_0001_edit.jpg join the IMG_0001 group automatically",
+    "matchSiblingFolders": "Pair across sibling folders",
+    "siblingFolderNames": "Pairable folder names",
+    "matchSiblingFoldersHint": "Comma-separated; for example RAW/IMG_1.CR3 can pair with JPEG/IMG_1.jpg. Rescan after saving.",
+    "savePairing": "Save pairing settings",
     "rawExtensions": "RAW extensions",
     "nonRawExtensions": "Non-RAW extensions",
     "addExtension": "Add…",
@@ -103,6 +137,10 @@
     "downloading": "Downloading… {{percent}}%",
     "updateError": "Update check failed — check your connection.",
     "updateHint": "Auto-update applies to installed builds only; not available in dev mode.",
+    "deletionAudit": "Deletion audit trail",
+    "deletionOperations": "{{count}} operations recorded",
+    "auditLog": "Append-only log",
+    "auditManifest": "Latest manifest",
     "changelog": "Changelog"
   },
   "status": {
@@ -110,6 +148,11 @@
     "groups": "{{count}} groups",
     "marked": "{{count}} marked",
     "refresh": "Refresh (F5)"
+  },
+  "statusLabels": {
+    "complete": "Paired",
+    "rawOnly": "RAW only",
+    "nonRawOnly": "Non-RAW only"
   },
   "exif": {
     "camera": "Camera",
@@ -121,6 +164,14 @@
     "dateTaken": "Date taken",
     "dimensions": "Dimensions",
     "fileSize": "File size"
+  },
+  "xmp": {
+    "title": "XMP rating",
+    "reject": "Reject",
+    "rated": "Created a {{rating}}-star XMP sidecar.",
+    "rejected": "Created a Reject XMP sidecar.",
+    "failed": "Could not write XMP: {{error}}",
+    "safeHint": "OmniRaw refuses to overwrite an existing sidecar."
   },
   "common": {
     "cancel": "Cancel",

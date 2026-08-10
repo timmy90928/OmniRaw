@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getMetadata } from '../../api/commands';
+import { getMetadata, writeXmpRating } from '../../api/commands';
 import { useCullStore } from '../../stores/cullStore';
 import { groupFiles } from '../../utils/marks';
 import type { ExifData, FileEntry, PairGroup } from '../../types';
+import { useToastStore } from '../../stores/toastStore';
 
 function formatSize(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -22,7 +23,9 @@ export function ExifPanel({
   const { t } = useTranslation();
   const setPreviewIndex = useCullStore((s) => s.setPreviewIndex);
   const toggleFile = useCullStore((s) => s.toggleFile);
+  const push = useToastStore((s) => s.push);
   const [exif, setExif] = useState<ExifData | null>(null);
+  const [writingRating, setWritingRating] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,6 +58,18 @@ export function ExifPanel({
 
   const files = groupFiles(group);
 
+  const rate = async (rating: number) => {
+    setWritingRating(true);
+    try {
+      await writeXmpRating(file.path, rating);
+      push('success', t(rating === -1 ? 'xmp.rejected' : 'xmp.rated', { rating }));
+    } catch (error) {
+      push('error', t('xmp.failed', { error: String(error) }));
+    } finally {
+      setWritingRating(false);
+    }
+  };
+
   return (
     <aside className="exif-panel">
       <h2>{file.fileName}</h2>
@@ -70,6 +85,20 @@ export function ExifPanel({
           </div>
         ))}
       </dl>
+      <div className="xmp-rating">
+        <h3>{t('xmp.title')}</h3>
+        <div>
+          {[1, 2, 3, 4, 5].map((rating) => (
+            <button key={rating} type="button" disabled={writingRating} onClick={() => void rate(rating)}>
+              {rating}★
+            </button>
+          ))}
+          <button type="button" className="reject" disabled={writingRating} onClick={() => void rate(-1)}>
+            {t('xmp.reject')}
+          </button>
+        </div>
+        <span>{t('xmp.safeHint')}</span>
+      </div>
       <div className="exif-files">
         <h3>{t('cull.groupFiles')}</h3>
         <ul>

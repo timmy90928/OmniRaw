@@ -2,9 +2,12 @@ import { invoke } from '@tauri-apps/api/core';
 import type {
   AppConfig,
   DeletionReport,
+  DeletionHistory,
   DeletionRequest,
   ExifData,
   ScanResult,
+  XmpWriteResult,
+  SimilarityCluster,
 } from '../types';
 
 export function scanFolder(root: string): Promise<ScanResult> {
@@ -37,6 +40,18 @@ export function commitDeletions(requests: DeletionRequest[]): Promise<DeletionRe
 
 export function deleteFiles(paths: string[]): Promise<DeletionReport> {
   return invoke<DeletionReport>('delete_files', { paths });
+}
+
+export function getDeletionHistory(): Promise<DeletionHistory> {
+  return invoke<DeletionHistory>('get_deletion_history');
+}
+
+export function writeXmpRating(path: string, rating: number): Promise<XmpWriteResult> {
+  return invoke<XmpWriteResult>('write_xmp_rating', { path, rating });
+}
+
+export function analyzeSimilarGroups(): Promise<SimilarityCluster[]> {
+  return invoke<SimilarityCluster[]>('analyze_similar_groups');
 }
 
 /** Exports a RAW's embedded preview to a sibling JPG; resolves to the new path. */

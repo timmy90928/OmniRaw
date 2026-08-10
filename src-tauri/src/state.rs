@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use std::sync::RwLock;
+use std::sync::{Mutex, RwLock};
 
 use crate::config::AppConfig;
 use crate::error::AppError;
@@ -12,16 +12,27 @@ pub struct AppState {
     pub scan_root: RwLock<Option<PathBuf>>,
     /// Last scan result — deletion commands resolve group ids against this.
     pub groups: RwLock<Vec<PairGroup>>,
+    pub deletion_log_path: PathBuf,
+    pub deletion_manifest_path: PathBuf,
+    pub watcher: Mutex<Option<notify::RecommendedWatcher>>,
     thumbs: ThumbService,
 }
 
 impl AppState {
-    pub fn new(config: AppConfig, config_path: PathBuf, thumbs: ThumbService) -> Self {
+    pub fn new(
+        config: AppConfig,
+        config_path: PathBuf,
+        data_dir: PathBuf,
+        thumbs: ThumbService,
+    ) -> Self {
         Self {
             config: RwLock::new(config),
             config_path,
             scan_root: RwLock::new(None),
             groups: RwLock::new(Vec::new()),
+            deletion_log_path: data_dir.join("deletion-operations.jsonl"),
+            deletion_manifest_path: data_dir.join("deletion-manifest.json"),
+            watcher: Mutex::new(None),
             thumbs,
         }
     }

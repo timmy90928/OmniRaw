@@ -61,6 +61,35 @@ export function SettingsScreen() {
         </select>
       </section>
 
+      <section className="settings-section column">
+        <label className="settings-check" htmlFor="sibling-folder-toggle">
+          <input
+            id="sibling-folder-toggle"
+            type="checkbox"
+            checked={draft.matchSiblingFolders}
+            onChange={(event) =>
+              setDraft({ ...draft, matchSiblingFolders: event.target.checked })
+            }
+          />
+          {t('settings.matchSiblingFolders')}
+        </label>
+        <input
+          type="text"
+          value={draft.siblingFolderNames.join(', ')}
+          aria-label={t('settings.siblingFolderNames')}
+          onChange={(event) =>
+            setDraft({
+              ...draft,
+              siblingFolderNames: event.target.value.split(',').map((name) => name.trim()),
+            })
+          }
+        />
+        <span className="settings-hint">{t('settings.matchSiblingFoldersHint')}</span>
+        <button type="button" className="primary" disabled={!dirty} onClick={() => void apply(draft)}>
+          {t('settings.savePairing')}
+        </button>
+      </section>
+
       <section className="settings-section">
         <label htmlFor="delete-mode-select">{t('settings.defaultDeleteMode')}</label>
         <select

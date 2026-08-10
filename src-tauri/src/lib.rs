@@ -1,3 +1,4 @@
+mod audit;
 mod commands;
 mod config;
 mod error;
@@ -8,6 +9,7 @@ mod protocol;
 mod scanner;
 mod state;
 mod thumbs;
+mod watcher;
 
 pub use error::AppError;
 
@@ -56,7 +58,11 @@ pub fn run() {
                 .expect("cannot resolve app cache dir");
             let thumbs = ThumbService::new(app.handle().clone(), cache_root)?;
 
-            app.manage(AppState::new(cfg, config_path, thumbs));
+            let data_dir = app
+                .path()
+                .app_data_dir()
+                .expect("cannot resolve app data dir");
+            app.manage(AppState::new(cfg, config_path, data_dir, thumbs));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -69,7 +75,10 @@ pub fn run() {
             commands::media::get_metadata,
             commands::delete::commit_deletions,
             commands::delete::delete_files,
+            commands::delete::get_deletion_history,
             commands::convert::convert_raw_to_jpg,
+            commands::xmp::write_xmp_rating,
+            commands::similarity::analyze_similar_groups,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

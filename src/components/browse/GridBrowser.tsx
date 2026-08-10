@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
@@ -14,12 +14,19 @@ const CELL_WIDTH = 200;
 const CELL_HEIGHT = 236; // 200px image + label strip
 const GAP = 12;
 
-export function GridBrowser({ groups }: { groups: PairGroup[] }) {
+export function GridBrowser({
+  entries,
+}: {
+  entries: { group: PairGroup; originalIndex: number }[];
+}) {
+  const groups = useMemo(() => entries.map((entry) => entry.group), [entries]);
   const parentRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(4);
   const setIndex = useCullStore((s) => s.setIndex);
   const marked = useCullStore((s) => s.marked);
   const setView = useLibraryStore((s) => s.setView);
+  const compared = useLibraryStore((s) => s.comparedGroupIds);
+  const toggleCompared = useLibraryStore((s) => s.toggleCompared);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -59,8 +66,8 @@ export function GridBrowser({ groups }: { groups: PairGroup[] }) {
     return () => clearTimeout(id);
   }, [firstRow, lastRow, columns, groups]);
 
-  const openCull = (index: number) => {
-    setIndex(index);
+  const openCull = (displayIndex: number) => {
+    setIndex(entries[displayIndex].originalIndex);
     setView('cull');
   };
 
@@ -96,6 +103,18 @@ export function GridBrowser({ groups }: { groups: PairGroup[] }) {
                       <span className="group-card-name">{group.baseName}</span>
                       <StatusBadge status={group.status} />
                     </div>
+                    <span
+                      className={compared.has(group.id) ? 'compare-toggle selected' : 'compare-toggle'}
+                      role="checkbox"
+                      aria-checked={compared.has(group.id)}
+                      title={t('browse.toggleCompare')}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleCompared(group.id);
+                      }}
+                    >
+                      {compared.has(group.id) ? '✓' : '+'}
+                    </span>
                   </button>
                 );
               })}

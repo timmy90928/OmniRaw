@@ -7,11 +7,14 @@ interface LibraryState {
   scanResult: ScanResult | null;
   scanning: boolean;
   scanProgress: number;
+  comparedGroupIds: Set<string>;
   setView: (view: View) => void;
   startScan: () => void;
   setScanProgress: (scannedFiles: number) => void;
   setScanResult: (result: ScanResult) => void;
   scanFailed: () => void;
+  toggleCompared: (groupId: string) => void;
+  clearCompared: () => void;
   /** Removes trashed files from groups in place — no rescan needed. */
   applyDeletions: (trashedPaths: string[]) => void;
 }
@@ -22,6 +25,7 @@ export const useLibraryStore = create<LibraryState>((set) => ({
   scanResult: null,
   scanning: false,
   scanProgress: 0,
+  comparedGroupIds: new Set(),
   setView: (view) => set({ view }),
   startScan: () => set({ scanning: true, scanProgress: 0 }),
   setScanProgress: (scannedFiles) => set({ scanProgress: scannedFiles }),
@@ -35,6 +39,14 @@ export const useLibraryStore = create<LibraryState>((set) => ({
       view: s.scanRoot === result.root ? s.view : 'browse',
     })),
   scanFailed: () => set({ scanning: false }),
+  toggleCompared: (groupId) =>
+    set((s) => {
+      const next = new Set(s.comparedGroupIds);
+      if (next.has(groupId)) next.delete(groupId);
+      else if (next.size < 4) next.add(groupId);
+      return { comparedGroupIds: next };
+    }),
+  clearCompared: () => set({ comparedGroupIds: new Set() }),
   applyDeletions: (trashedPaths) =>
     set((s) => {
       if (!s.scanResult || trashedPaths.length === 0) return {};
@@ -55,6 +67,10 @@ export const useLibraryStore = create<LibraryState>((set) => ({
                 : 'nonRawOnly';
           return { ...g, status };
         });
-      return { scanResult: { ...s.scanResult, groups } };
+      const presentIds = new Set(groups.map((group) => group.id));
+      return {
+        scanResult: { ...s.scanResult, groups },
+        comparedGroupIds: new Set([...s.comparedGroupIds].filter((id) => presentIds.has(id))),
+      };
     }),
 }));

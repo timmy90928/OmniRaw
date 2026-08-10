@@ -3,7 +3,7 @@
 RAW/JPEG 生命週期連動的照片選片 (culling) 工具。刪 JPG 時同名 RAW 一併處理,並清理孤兒檔案。
 
 ## 技術棧
-- **後端**:Tauri 2(目前 `Cargo.lock` 鎖定 2.11.5)+ Rust(rawler 解 RAW 內嵌預覽、trash 進回收桶、rayon 縮圖池;tauri-plugin-updater/process 做桌面自動更新)
+- **後端**:Tauri 2(目前 `Cargo.lock` 鎖定 2.11.5)+ Rust(rawler 解 RAW 內嵌預覽、trash 進回收桶、notify 監控資料夾、rayon 縮圖池;tauri-plugin-updater/process 做桌面自動更新)
 - **前端**:React 19 + TypeScript + Vite;zustand 狀態、@tanstack/react-virtual 虛擬化、i18next 雙語(zh-TW 預設 + en,兩份 locale 必須同步維護)
 - **圖片傳輸**:自訂 `omniraw://` protocol(Windows 上為 `http://omniraw.localhost/...`),不用 asset protocol
 - 完整實作計畫:`~/.claude/plans/typed-coalescing-bachman.md`
@@ -11,9 +11,14 @@ RAW/JPEG 生命週期連動的照片選片 (culling) 工具。刪 JPG 時同名 
 ## 核心規則
 - **配對規則**:同資料夾 + 同檔名 basename(大小寫不敏感)才算一組;一組可含 1 RAW + 多非 RAW
 - **輸出檔配對 (prefix matching)**:非 RAW 檔名 =「某 RAW 檔名 + 非英數分隔符 + 後綴」時歸入該 RAW 組(`IMG_0001_edit.jpg` → `IMG_0001.CR3`;取最長相符 RAW 檔名;`IMG_00010.jpg` 不誤配)。設定 `matchExportedSuffixes` 可關(預設開)。背景:使用者修完 RAW 會輸出多張 JPG 檢查,不可被判成孤兒
+- **跨同層資料夾配對**:`matchSiblingFolders` 預設關閉；啟用後僅對 `siblingFolderNames` 明列的資料夾名稱(預設 raw/jpeg/jpg/exports/edited)使用共同 parent 作 logical dir，不得讓其他任意 sibling 誤配
 - **刪除一律走回收桶**(`trash` crate),v1 無永久刪除
 - **RAW→JPG 轉檔**:只對 `RawOnly` 組;取 RAW 內嵌預覽(`preview::export_embedded_jpeg`,仍在 preview.rs 內,符合 rawler 隔離)非完整 demosaic;輸出存 **RAW 旁邊同 basename `.jpg`**,既有檔不覆寫(改 `_converted-N`);轉完自動觸發重掃使該組變 Complete。command:`convert_raw_to_jpg(path)`
 - **重新整理**:F5 或 status bar 鈕重掃當前 scan root(後端 `scan_folder` 冪等,無新 command);`cullStore.reconcileMarks` 保留存活檔標記、丟棄已刪檔;停在當前畫面(`setScanResult` 僅在 root 改變時才跳 browse)
+- **自動監控**:`notify` 遞迴監控 scan root，送 `scan://changed`；前端 700ms debounce 後重掃。不可監控 scan root 外路徑
+- **HEIC/HEIF**:macOS 走系統 ImageIO (`sips`)，Windows 走 Shell/WIC (`IShellItemImageFactory`)；不引入 AGPL decoder。Windows 沒安裝 HEIF codec 時明確回報預覽錯誤
+- **XMP 評分**:command `write_xmp_rating(path, -1..=5)` 僅允許 scan root 內檔案，sidecar 採 `create_new`，既有 `.xmp` 一律拒絕覆寫
+- **刪除稽核**:每次刪除後在 app data 追加 `deletion-operations.jsonl` 並重建 `deletion-manifest.json`；稽核寫入失敗不得使已完成的刪除被前端重試
 - **自動更新**:tauri-plugin-updater 檢查 GitHub Releases 的 `latest.json`→下載→安裝→`relaunch`;需簽章金鑰對,公鑰在 `tauri.conf.json` `plugins.updater.pubkey`、私鑰為 GitHub secret `TAURI_SIGNING_PRIVATE_KEY`(+`_PASSWORD`);`bundle.createUpdaterArtifacts:true` 產 `latest.json`+`.sig`;**dev 模式測不到、只在打包版生效**
 - rawler 版本 **pin 死**(`=0.7.2`),所有 rawler 呼叫只允許出現在 `preview.rs` 與 `exif.rs`
 - 不啟用 Tauri fs plugin;所有吃路徑的 command 必須 canonicalize 並驗證位於 scan root 之下
@@ -47,6 +52,8 @@ OmniRaw/
 │       ├── layout/        # AppShell、Sidebar、StatusBar
 │       ├── welcome/       # WelcomeScreen
 │       ├── browse/        # BrowseScreen、GridBrowser(虛擬化)、StatusBadge
+│       ├── compare/       # CompareScreen(2–4 組並排比較)
+│       ├── similar/       # SimilarScreen(時間窗 + average hash 分群)
 │       ├── cull/          # CullView、PreviewPane、Filmstrip、ExifPanel
 │       ├── review/        # ReviewScreen(逐檔 checkbox)
 │       ├── orphans/       # OrphanScreen(RAW 區塊含 RAW→JPG 轉檔鈕)
@@ -60,9 +67,9 @@ OmniRaw/
     └── src/
         ├── main.rs / lib.rs        # Builder:plugins、state、protocol、commands 接線
         ├── error.rs                # AppError → { code, message }
-        ├── state.rs / model.rs / config.rs / scanner.rs   # M2
+        ├── state.rs / model.rs / config.rs / scanner.rs / watcher.rs / audit.rs
         ├── exif.rs / preview.rs / thumbs.rs / protocol.rs # M3(preview.rs 另含 export_embedded_jpeg)
-        └── commands/               # scan.rs, media.rs, delete.rs, settings.rs, convert.rs(RAW→JPG)
+        └── commands/               # scan/media/delete/settings/convert/xmp/similarity
 ```
 
 ## 驗證
@@ -70,5 +77,5 @@ OmniRaw/
 - 前端:`npm test && npm run build`(含 tsc)
 - GUI:`npm run tauri dev` 手動 smoke;測試照片用 raw.pixls.us CC0 樣本(Canon CR2/CR3 必測)
 - 打包:`npm run tauri build` → `src-tauri/target/release/bundle/`(NSIS setup.exe + MSI)
-- **打包全自動化(CI-first)**:`.github/workflows/build.yml`——每次 push/PR 跑前端測試/build、Rust fmt/Clippy/tests 與 npm/RustSec 依賴稽核(ubuntu);push `main` 產 macOS universal `.dmg` + Windows installer 為 artifacts;push `v*` tag 自動建 GitHub Release(含 `latest.json`+`.sig` 供自動更新)。本機不需要 `tauri build`。repo:github.com/timmy90928/OmniRaw(public)。macOS 版未簽章(Apple 層級),需 `xattr -cr` 解除隔離。使用者同時在 Windows 與 Mac 上開發
+- **打包全自動化(CI-first)**:`.github/workflows/build.yml`——每次 push/PR 跑前端測試/build、Rust fmt/Clippy/tests 與 npm/RustSec 依賴稽核(ubuntu);push `main` 產 macOS universal `.dmg` + Windows installer 為 artifacts;push `v*` tag 自動建 GitHub Release(含 `latest.json`+`.sig` 供自動更新)。Windows runner 會靜默安裝/卸載 MSI；macOS runner 會掛載 DMG 並驗證 app bundle，設定 Apple secrets 時再強制 codesign/Gatekeeper/stapler。簽章細節見 `docs/release-signing.md`
 - **自動更新前置(必要)**:`bundle` job 需 repo secrets `TAURI_SIGNING_PRIVATE_KEY` 與 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`(這是 updater 專用簽章,與 Apple 簽章無關);未設則 `bundle` 失敗。發新版流程:同步升 `package.json`/`Cargo.toml`/`tauri.conf.json` 三處 version + 更新 `CHANGELOG.md` → 打 `v*` tag
