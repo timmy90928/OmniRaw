@@ -40,8 +40,7 @@ fn read_kamadak(path: &Path) -> Option<ExifData> {
         f_number: rational(&exif, Tag::FNumber).map(|f| format!("{:.1}", f)),
         iso: uint(&exif, Tag::PhotographicSensitivity),
         focal_length_mm: rational(&exif, Tag::FocalLength),
-        date_taken: ascii(&exif, Tag::DateTimeOriginal)
-            .or_else(|| ascii(&exif, Tag::DateTime)),
+        date_taken: ascii(&exif, Tag::DateTimeOriginal).or_else(|| ascii(&exif, Tag::DateTime)),
         width: uint(&exif, Tag::PixelXDimension).or_else(|| uint(&exif, Tag::ImageWidth)),
         height: uint(&exif, Tag::PixelYDimension).or_else(|| uint(&exif, Tag::ImageLength)),
     })

@@ -23,11 +23,7 @@ pub async fn scan_folder(
     let root_path = dunce::canonicalize(PathBuf::from(&root))
         .map_err(|_| AppError::Other(format!("cannot open folder: {root}")))?;
 
-    let config = state
-        .config
-        .read()
-        .expect("config lock poisoned")
-        .clone();
+    let config = state.config.read().expect("config lock poisoned").clone();
 
     // Store the root first so later per-path commands can validate against it.
     *state.scan_root.write().expect("scan_root lock poisoned") = Some(root_path.clone());

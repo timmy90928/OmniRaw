@@ -58,7 +58,8 @@ fn serve<R: tauri::Runtime>(
     let decoded = URL_SAFE_NO_PAD
         .decode(encoded)
         .map_err(|_| AppError::Other("bad path encoding".into()))?;
-    let raw_path = String::from_utf8(decoded).map_err(|_| AppError::Other("bad path utf8".into()))?;
+    let raw_path =
+        String::from_utf8(decoded).map_err(|_| AppError::Other("bad path utf8".into()))?;
 
     let state = app.state::<AppState>();
     let path: PathBuf = state.ensure_in_scan_root(PathBuf::from(raw_path).as_path())?;

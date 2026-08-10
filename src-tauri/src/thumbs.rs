@@ -175,7 +175,10 @@ mod tests {
         let file = tmp.path().join("a.jpg");
         File::create(&file).unwrap().write_all(b"12345").unwrap();
         let k1 = cache_file_name(&file).unwrap();
-        File::create(&file).unwrap().write_all(b"123456789").unwrap();
+        File::create(&file)
+            .unwrap()
+            .write_all(b"123456789")
+            .unwrap();
         let k2 = cache_file_name(&file).unwrap();
         assert_ne!(k1, k2);
     }

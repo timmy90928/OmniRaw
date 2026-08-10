@@ -12,9 +12,12 @@ concurrency:
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
-  # Fast gate on every push/PR: Rust tests + TypeScript build.
+  # Quality and security gate on every push/PR.
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@v4
 
@@ -24,6 +27,8 @@ jobs:
           cache: npm
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
 
       # Tauri's Linux system dependencies (needed to compile the crate)
       - run: |
@@ -35,9 +40,22 @@ jobs:
           workspaces: src-tauri
 
       - run: npm ci
+      - run: npm test
       - run: npm run build
-      - run: cargo test
+      - run: npm audit --audit-level=high
+      - run: cargo fmt --all -- --check
         working-directory: src-tauri
+      - run: cargo clippy --locked --all-targets -- -D warnings
+        working-directory: src-tauri
+      - run: cargo test --locked
+        working-directory: src-tauri
+      - uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: src-tauri
+          # rkyv is an inactive optional feature of rust_decimal. It is present
+          # in Cargo.lock but absent from the resolved feature graph.
+          ignore: RUSTSEC-2026-0235
 
   # Full bundles: on main pushes → workflow artifacts; on v* tags → GitHub Release.
   bundle:

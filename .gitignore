@@ -15,6 +15,9 @@ dist-ssr
 # Claude scratch space
 .claude/temp/
 
+# Codex scratch space
+.codex/temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

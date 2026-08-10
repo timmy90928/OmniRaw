@@ -29,8 +29,8 @@ impl Default for AppConfig {
         let to_vec = |exts: &[&str]| exts.iter().map(|s| s.to_string()).collect();
         Self {
             raw_extensions: to_vec(&[
-                "dng", "cr2", "cr3", "nef", "nrw", "arw", "orf", "raf", "rw2", "pef", "srw",
-                "x3f", "3fr", "iiq",
+                "dng", "cr2", "cr3", "nef", "nrw", "arw", "orf", "raf", "rw2", "pef", "srw", "x3f",
+                "3fr", "iiq",
             ]),
             non_raw_extensions: to_vec(&[
                 "jpg", "jpeg", "png", "heic", "heif", "tif", "tiff", "webp",
@@ -55,9 +55,7 @@ impl AppConfig {
                     continue;
                 }
                 if !e.chars().all(|c| c.is_ascii_alphanumeric()) {
-                    return Err(AppError::InvalidConfig(format!(
-                        "invalid extension: {ext}"
-                    )));
+                    return Err(AppError::InvalidConfig(format!("invalid extension: {ext}")));
                 }
                 if seen.insert(e.clone()) {
                     cleaned.push(e);
@@ -120,8 +118,10 @@ mod tests {
 
     #[test]
     fn validate_normalizes_case_dots_and_duplicates() {
-        let mut cfg = AppConfig::default();
-        cfg.raw_extensions = vec![".CR3".into(), "cr3".into(), " Nef ".into()];
+        let mut cfg = AppConfig {
+            raw_extensions: vec![".CR3".into(), "cr3".into(), " Nef ".into()],
+            ..AppConfig::default()
+        };
         cfg.validate().unwrap();
         assert_eq!(cfg.raw_extensions, vec!["cr3", "nef"]);
     }
@@ -135,8 +135,10 @@ mod tests {
 
     #[test]
     fn validate_rejects_empty_list() {
-        let mut cfg = AppConfig::default();
-        cfg.raw_extensions = vec!["  ".into()];
+        let mut cfg = AppConfig {
+            raw_extensions: vec!["  ".into()],
+            ..AppConfig::default()
+        };
         assert!(cfg.validate().is_err());
     }
 }

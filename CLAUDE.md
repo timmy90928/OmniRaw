@@ -3,7 +3,7 @@
 RAW/JPEG 生命週期連動的照片選片 (culling) 工具。刪 JPG 時同名 RAW 一併處理,並清理孤兒檔案。
 
 ## 技術棧
-- **後端**:Tauri 2.9 + Rust(rawler 解 RAW 內嵌預覽、trash 進回收桶、rayon 縮圖池;tauri-plugin-updater/process 做桌面自動更新)
+- **後端**:Tauri 2(目前 `Cargo.lock` 鎖定 2.11.5)+ Rust(rawler 解 RAW 內嵌預覽、trash 進回收桶、rayon 縮圖池;tauri-plugin-updater/process 做桌面自動更新)
 - **前端**:React 19 + TypeScript + Vite;zustand 狀態、@tanstack/react-virtual 虛擬化、i18next 雙語(zh-TW 預設 + en,兩份 locale 必須同步維護)
 - **圖片傳輸**:自訂 `omniraw://` protocol(Windows 上為 `http://omniraw.localhost/...`),不用 asset protocol
 - 完整實作計畫:`~/.claude/plans/typed-coalescing-bachman.md`
@@ -28,6 +28,7 @@ RAW/JPEG 生命週期連動的照片選片 (culling) 工具。刪 JPG 時同名 
 ## 目錄結構
 ```
 OmniRaw/
+├── AGENTS.md              # Codex 入口;指向本檔並補充交付前驗證
 ├── CLAUDE.md              # 本檔:專案規範與結構(單一事實來源)
 ├── README.md              # 精簡門面(指向本檔)
 ├── CHANGELOG.md           # 版本記錄(Keep a Changelog;About 頁以 ?raw 讀入渲染)
@@ -54,7 +55,7 @@ OmniRaw/
 │       └── common/        # EmptyState、GroupThumb、MarkBadge、ConfirmDialog、Toasts、Spinner
 └── src-tauri/             # Rust 後端
     ├── Cargo.toml / tauri.conf.json / build.rs
-    ├── capabilities/default.json   # core:default + dialog:default
+    ├── capabilities/default.json   # core/dialog/updater/process permissions
     ├── icons/
     └── src/
         ├── main.rs / lib.rs        # Builder:plugins、state、protocol、commands 接線
@@ -65,9 +66,9 @@ OmniRaw/
 ```
 
 ## 驗證
-- Rust:`cargo test` + `cargo check`(於 `src-tauri/`)
-- 前端:`npm run build`(含 tsc)
+- Rust:`cargo fmt --all -- --check && cargo clippy --locked --all-targets -- -D warnings && cargo test --locked`(於 `src-tauri/`)
+- 前端:`npm test && npm run build`(含 tsc)
 - GUI:`npm run tauri dev` 手動 smoke;測試照片用 raw.pixls.us CC0 樣本(Canon CR2/CR3 必測)
 - 打包:`npm run tauri build` → `src-tauri/target/release/bundle/`(NSIS setup.exe + MSI)
-- **打包全自動化(CI-first)**:`.github/workflows/build.yml`——每次 push/PR 跑 `cargo test` + 前端 build(ubuntu);push `main` 產 macOS universal `.dmg` + Windows installer 為 artifacts;push `v*` tag 自動建 GitHub Release(含 `latest.json`+`.sig` 供自動更新)。本機不需要 `tauri build`。repo:github.com/timmy90928/OmniRaw(public)。macOS 版未簽章(Apple 層級),需 `xattr -cr` 解除隔離。使用者同時在 Windows 與 Mac 上開發
+- **打包全自動化(CI-first)**:`.github/workflows/build.yml`——每次 push/PR 跑前端測試/build、Rust fmt/Clippy/tests 與 npm/RustSec 依賴稽核(ubuntu);push `main` 產 macOS universal `.dmg` + Windows installer 為 artifacts;push `v*` tag 自動建 GitHub Release(含 `latest.json`+`.sig` 供自動更新)。本機不需要 `tauri build`。repo:github.com/timmy90928/OmniRaw(public)。macOS 版未簽章(Apple 層級),需 `xattr -cr` 解除隔離。使用者同時在 Windows 與 Mac 上開發
 - **自動更新前置(必要)**:`bundle` job 需 repo secrets `TAURI_SIGNING_PRIVATE_KEY` 與 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`(這是 updater 專用簽章,與 Apple 簽章無關);未設則 `bundle` 失敗。發新版流程:同步升 `package.json`/`Cargo.toml`/`tauri.conf.json` 三處 version + 更新 `CHANGELOG.md` → 打 `v*` tag

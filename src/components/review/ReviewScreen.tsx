@@ -8,7 +8,7 @@ import { EmptyState } from '../common/EmptyState';
 import { GroupThumb } from '../common/GroupThumb';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { groupFiles } from '../../utils/marks';
-import { isNetworkFailure } from '../../utils/deletion';
+import { isNetworkFailure, remainingPathsAfterDeletion } from '../../utils/deletion';
 import { useToastStore } from '../../stores/toastStore';
 import type { DeletionReport } from '../../types';
 
@@ -50,7 +50,9 @@ export function ReviewScreen() {
     try {
       const result = await deleteFiles(allPaths);
       applyDeletions(result.trashed);
-      rows.forEach((r) => unmark(r.group.id));
+      rows.forEach((row) =>
+        markFiles(row.group.id, remainingPathsAfterDeletion(row.paths, result.trashed)),
+      );
       setReport(result);
     } catch (err) {
       console.error('deletion failed', err);

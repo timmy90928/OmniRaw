@@ -29,8 +29,10 @@ pub async fn reset_config(state: State<'_, AppState>) -> Result<AppConfig, AppEr
         .expect("config lock poisoned")
         .language
         .clone();
-    let mut config = AppConfig::default();
-    config.language = language;
+    let config = AppConfig {
+        language,
+        ..AppConfig::default()
+    };
     config::save(&state.config_path, &config)?;
     *state.config.write().expect("config lock poisoned") = config.clone();
     Ok(config)

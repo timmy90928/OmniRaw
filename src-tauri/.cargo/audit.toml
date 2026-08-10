@@ -1,0 +1,6 @@
+[advisories]
+# rkyv 0.7 is only an inactive optional dependency of rust_decimal (pulled by
+# byte-unit / tauri-plugin-log). `cargo tree --target all -i rkyv` resolves no
+# path, so the vulnerable archive-validation code is not compiled or reachable.
+# Remove this exception once rust_decimal no longer lists rkyv 0.7.
+ignore = ["RUSTSEC-2026-0235"]

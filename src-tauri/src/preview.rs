@@ -126,7 +126,9 @@ mod tests {
     fn thumbnail_downscales_to_max_edge() {
         let tmp = tempfile::tempdir().unwrap();
         let src = tmp.path().join("big.png");
-        RgbaImage::new(1024, 512).save_with_format(&src, ImageFormat::Png).unwrap();
+        RgbaImage::new(1024, 512)
+            .save_with_format(&src, ImageFormat::Png)
+            .unwrap();
 
         let bytes = generate_thumbnail(&src, FileKind::NonRaw).unwrap();
         let thumb = image::load_from_memory(&bytes).unwrap();
@@ -138,7 +140,9 @@ mod tests {
     fn small_images_are_not_upscaled() {
         let tmp = tempfile::tempdir().unwrap();
         let src = tmp.path().join("small.png");
-        RgbaImage::new(100, 80).save_with_format(&src, ImageFormat::Png).unwrap();
+        RgbaImage::new(100, 80)
+            .save_with_format(&src, ImageFormat::Png)
+            .unwrap();
 
         let bytes = generate_thumbnail(&src, FileKind::NonRaw).unwrap();
         let thumb = image::load_from_memory(&bytes).unwrap();

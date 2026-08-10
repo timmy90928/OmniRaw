@@ -99,7 +99,7 @@ Thumbnail cache lives in the platform cache dir (`%LOCALAPPDATA%\com.omniraw.app
 
 ## Development
 
-Prerequisites: Node.js 22+, Rust (via [rustup](https://rustup.rs)). Windows additionally needs MSVC Build Tools; macOS needs Xcode Command Line Tools (`xcode-select --install`).
+Prerequisites: Node.js 22.12+, Rust (via [rustup](https://rustup.rs)). Windows additionally needs MSVC Build Tools; macOS needs Xcode Command Line Tools (`xcode-select --install`).
 
 ```sh
 git clone https://github.com/timmy90928/OmniRaw.git
@@ -111,15 +111,18 @@ npm run tauri dev    # run locally with hot reload
 Tests and type checks:
 
 ```sh
-cargo test           # in src-tauri/ — pairing engine, cache keys, deletion expansion
-npx tsc --noEmit     # frontend type check
+npm test             # frontend stores and deletion-state regression tests
+npm run build        # frontend type check + production bundle
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked  # in src-tauri/ — pairing engine, cache keys, deletion expansion
 ```
 
 ### CI-first packaging
 
 Packaging is fully automated on GitHub Actions — no local `tauri build` needed:
 
-- every push / PR runs Rust tests + the TypeScript build (Ubuntu gate)
+- every `main` push / PR runs frontend tests/build, Rust fmt/Clippy/tests, and dependency audits
 - pushes to `main` produce macOS (`.dmg`, universal) and Windows (`.exe`/`.msi`) bundles as workflow artifacts
 - pushing a `v*` tag publishes a GitHub Release with all installers attached plus the signed updater artifacts (`latest.json` + `.sig`)
 

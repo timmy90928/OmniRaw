@@ -4,7 +4,7 @@ import { useLibraryStore } from '../../stores/libraryStore';
 import { useToastStore } from '../../stores/toastStore';
 import { deleteFiles } from '../../api/commands';
 import { useConvertRaw } from '../../hooks/useConvertRaw';
-import { isNetworkFailure } from '../../utils/deletion';
+import { isNetworkFailure, remainingSelectedGroupIds } from '../../utils/deletion';
 import { EmptyState } from '../common/EmptyState';
 import { GroupThumb } from '../common/GroupThumb';
 import { ConfirmDialog } from '../common/ConfirmDialog';
@@ -145,7 +145,7 @@ export function OrphanScreen() {
       const report = await deleteFiles(selectedPaths);
       applyDeletions(report.trashed);
       setFailed(report.failed);
-      setSelected(new Set());
+      setSelected(remainingSelectedGroupIds(allGroups, selected, report.trashed));
     } catch (err) {
       console.error('orphan deletion failed', err);
       useToastStore.getState().push('error', t('errors.deleteFailed'));

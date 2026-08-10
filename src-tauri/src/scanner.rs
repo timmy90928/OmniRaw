@@ -46,7 +46,7 @@ pub fn collect_files(
             continue;
         }
         total_files += 1;
-        if total_files % 500 == 0 {
+        if total_files.is_multiple_of(500) {
             on_progress(total_files);
         }
 
@@ -141,10 +141,16 @@ pub fn build_pair_groups(entries: Vec<FileEntry>, match_exported_suffixes: bool)
         entries.into_iter().partition(|e| e.kind == FileKind::Raw);
 
     let mut map: BTreeMap<String, PairGroup> = BTreeMap::new();
-    // dir_lower -> lowercase RAW basenames in that dir (for prefix lookup)
+    // Exact directory path -> lowercase RAW basenames in that directory.
+    // Directory case must remain intact because case-sensitive APFS volumes can
+    // legitimately contain distinct sibling directories such as `A` and `a`.
     let mut raw_bases: HashMap<String, Vec<String>> = HashMap::new();
 
-    let mut insert = |map: &mut BTreeMap<String, PairGroup>, id: String, dir: String, base: String, entry: FileEntry| {
+    let insert = |map: &mut BTreeMap<String, PairGroup>,
+                  id: String,
+                  dir: String,
+                  base: String,
+                  entry: FileEntry| {
         let group = map.entry(id.clone()).or_insert_with(|| PairGroup {
             id,
             dir,
@@ -161,28 +167,31 @@ pub fn build_pair_groups(entries: Vec<FileEntry>, match_exported_suffixes: bool)
 
     for entry in raw_entries {
         let (dir, base) = split_dir_base(&entry);
-        let (dir_l, base_l) = (dir.to_lowercase(), base.to_lowercase());
-        raw_bases.entry(dir_l.clone()).or_default().push(base_l.clone());
-        insert(&mut map, format!("{dir_l}|{base_l}"), dir, base, entry);
+        let base_l = base.to_lowercase();
+        raw_bases
+            .entry(dir.clone())
+            .or_default()
+            .push(base_l.clone());
+        insert(&mut map, format!("{dir}|{base_l}"), dir, base, entry);
     }
 
     for entry in non_raw_entries {
         let (dir, base) = split_dir_base(&entry);
-        let (dir_l, base_l) = (dir.to_lowercase(), base.to_lowercase());
-        let exact_id = format!("{dir_l}|{base_l}");
+        let base_l = base.to_lowercase();
+        let exact_id = format!("{dir}|{base_l}");
 
         let target_id = if map.contains_key(&exact_id) {
             exact_id
         } else if match_exported_suffixes {
             raw_bases
-                .get(&dir_l)
+                .get(&dir)
                 .and_then(|bases| {
                     bases
                         .iter()
                         .filter(|p| is_export_of(&base_l, p))
                         .max_by_key(|p| p.len())
                 })
-                .map(|p| format!("{dir_l}|{p}"))
+                .map(|p| format!("{dir}|{p}"))
                 .unwrap_or(exact_id)
         } else {
             exact_id
@@ -291,6 +300,32 @@ mod tests {
     }
 
     #[test]
+    fn case_distinct_directories_do_not_pair() {
+        let entries = vec![
+            FileEntry {
+                path: "/photos/A/IMG_0001.CR3".into(),
+                file_name: "IMG_0001.CR3".into(),
+                ext: "cr3".into(),
+                kind: FileKind::Raw,
+                size: 0,
+                mtime_ms: 0,
+            },
+            FileEntry {
+                path: "/photos/a/IMG_0001.jpg".into(),
+                file_name: "IMG_0001.jpg".into(),
+                ext: "jpg".into(),
+                kind: FileKind::NonRaw,
+                size: 0,
+                mtime_ms: 0,
+            },
+        ];
+
+        let groups = build_pair_groups(entries, true);
+        assert_eq!(groups.len(), 2);
+        assert!(groups.iter().all(|g| g.status != GroupStatus::Complete));
+    }
+
+    #[test]
     fn unknown_extensions_are_skipped() {
         let tmp = tempfile::tempdir().unwrap();
         touch(tmp.path(), "notes.txt");
@@ -323,8 +358,10 @@ mod tests {
         touch(tmp.path(), "IMG_0006.xyz");
         touch(tmp.path(), "IMG_0006.jpg");
 
-        let mut config = AppConfig::default();
-        config.raw_extensions = vec!["xyz".into()];
+        let config = AppConfig {
+            raw_extensions: vec!["xyz".into()],
+            ..AppConfig::default()
+        };
         let collected = collect_files(tmp.path(), &config, |_| {}).unwrap();
         let groups = build_pair_groups(collected.entries, config.match_exported_suffixes);
         assert_eq!(groups.len(), 1);
