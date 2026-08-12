@@ -34,7 +34,7 @@ function result(groups: PairGroup[]): ScanResult {
 
 describe('cullStore reconciliation', () => {
   beforeEach(() => {
-    useCullStore.setState({ currentIndex: 0, previewIndex: 0, marked: new Map() });
+    useCullStore.setState({ sessionRoot: null, currentIndex: 0, previewIndex: 0, marked: new Map() });
   });
 
   it('keeps only marks that still exist and clamps the cursor', () => {
@@ -56,5 +56,26 @@ describe('cullStore reconciliation', () => {
     const state = useCullStore.getState();
     expect(state.currentIndex).toBe(1);
     expect([...state.marked.entries()]).toEqual([['kept', new Set(['/photos/kept.raw'])]]);
+  });
+
+  it('restores a matching folder but resets marks for a different folder', () => {
+    useCullStore.setState({
+      sessionRoot: '/photos',
+      currentIndex: 3,
+      previewIndex: 1,
+      marked: new Map([['kept', new Set(['/photos/kept.raw'])]]),
+    });
+    useCullStore.getState().restoreForScan(
+      result([group('kept', ['/photos/kept.raw', '/photos/kept.jpg'])]),
+    );
+    expect(useCullStore.getState().marked.get('kept')).toEqual(new Set(['/photos/kept.raw']));
+    expect(useCullStore.getState().currentIndex).toBe(0);
+
+    useCullStore.getState().restoreForScan({
+      ...result([group('other', ['/elsewhere/other.raw'])]),
+      root: '/elsewhere',
+    });
+    expect(useCullStore.getState().sessionRoot).toBe('/elsewhere');
+    expect(useCullStore.getState().marked.size).toBe(0);
   });
 });

@@ -1,5 +1,26 @@
 import { create } from 'zustand';
-import type { View, ScanResult, GroupStatus } from '../types';
+import type { View, ScanResult, GroupStatus, GroupFilter, GroupSort } from '../types';
+
+interface PersistedLibraryState {
+  view: View;
+  scanRoot: string | null;
+  recentFolders: string[];
+  comparedGroupIds: string[];
+  browseQuery: string;
+  browseFilter: GroupFilter;
+  browseSort: GroupSort;
+}
+
+function loadPersisted(): PersistedLibraryState | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    return JSON.parse(localStorage.getItem('omniraw.library-session.v1') ?? 'null');
+  } catch {
+    return null;
+  }
+}
+
+const persisted = loadPersisted();
 
 interface LibraryState {
   view: View;
@@ -7,7 +28,11 @@ interface LibraryState {
   scanResult: ScanResult | null;
   scanning: boolean;
   scanProgress: number;
+  recentFolders: string[];
   comparedGroupIds: Set<string>;
+  browseQuery: string;
+  browseFilter: GroupFilter;
+  browseSort: GroupSort;
   setView: (view: View) => void;
   startScan: () => void;
   setScanProgress: (scannedFiles: number) => void;
@@ -15,17 +40,25 @@ interface LibraryState {
   scanFailed: () => void;
   toggleCompared: (groupId: string) => void;
   clearCompared: () => void;
+  forgetRecent: (root: string) => void;
+  setBrowseQuery: (query: string) => void;
+  setBrowseFilter: (filter: GroupFilter) => void;
+  setBrowseSort: (sort: GroupSort) => void;
   /** Removes trashed files from groups in place — no rescan needed. */
   applyDeletions: (trashedPaths: string[]) => void;
 }
 
 export const useLibraryStore = create<LibraryState>((set) => ({
-  view: 'welcome',
-  scanRoot: null,
+  view: persisted?.view ?? 'welcome',
+  scanRoot: persisted?.scanRoot ?? null,
   scanResult: null,
   scanning: false,
   scanProgress: 0,
-  comparedGroupIds: new Set(),
+  recentFolders: persisted?.recentFolders ?? [],
+  comparedGroupIds: new Set(persisted?.comparedGroupIds ?? []),
+  browseQuery: persisted?.browseQuery ?? '',
+  browseFilter: persisted?.browseFilter ?? 'all',
+  browseSort: persisted?.browseSort ?? 'nameAsc',
   setView: (view) => set({ view }),
   startScan: () => set({ scanning: true, scanProgress: 0 }),
   setScanProgress: (scannedFiles) => set({ scanProgress: scannedFiles }),
@@ -34,11 +67,15 @@ export const useLibraryStore = create<LibraryState>((set) => ({
       scanRoot: result.root,
       scanResult: result,
       scanning: false,
+      recentFolders: [result.root, ...s.recentFolders.filter((root) => root !== result.root)].slice(0, 8),
+      comparedGroupIds: new Set(
+        [...s.comparedGroupIds].filter((id) => result.groups.some((group) => group.id === id)),
+      ),
       // Opening a new/different folder jumps to Browse; an in-place refresh of
       // the same root keeps the user on whatever screen they were on.
       view: s.scanRoot === result.root ? s.view : 'browse',
     })),
-  scanFailed: () => set({ scanning: false }),
+  scanFailed: () => set((state) => ({ scanning: false, view: state.scanResult ? state.view : 'welcome' })),
   toggleCompared: (groupId) =>
     set((s) => {
       const next = new Set(s.comparedGroupIds);
@@ -47,6 +84,14 @@ export const useLibraryStore = create<LibraryState>((set) => ({
       return { comparedGroupIds: next };
     }),
   clearCompared: () => set({ comparedGroupIds: new Set() }),
+  forgetRecent: (root) =>
+    set((state) => ({
+      recentFolders: state.recentFolders.filter((candidate) => candidate !== root),
+      scanRoot: state.scanRoot === root && !state.scanResult ? null : state.scanRoot,
+    })),
+  setBrowseQuery: (browseQuery) => set({ browseQuery }),
+  setBrowseFilter: (browseFilter) => set({ browseFilter }),
+  setBrowseSort: (browseSort) => set({ browseSort }),
   applyDeletions: (trashedPaths) =>
     set((s) => {
       if (!s.scanResult || trashedPaths.length === 0) return {};
@@ -74,3 +119,18 @@ export const useLibraryStore = create<LibraryState>((set) => ({
       };
     }),
 }));
+
+if (typeof localStorage !== 'undefined') {
+  useLibraryStore.subscribe((state) => {
+    const value: PersistedLibraryState = {
+      view: state.view,
+      scanRoot: state.scanRoot,
+      recentFolders: state.recentFolders,
+      comparedGroupIds: [...state.comparedGroupIds],
+      browseQuery: state.browseQuery,
+      browseFilter: state.browseFilter,
+      browseSort: state.browseSort,
+    };
+    localStorage.setItem('omniraw.library-session.v1', JSON.stringify(value));
+  });
+}

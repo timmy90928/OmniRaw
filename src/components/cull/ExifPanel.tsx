@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getMetadata, writeXmpRating } from '../../api/commands';
+import { getMetadata, readXmpInfo, writeXmpRating } from '../../api/commands';
 import { useCullStore } from '../../stores/cullStore';
 import { groupFiles } from '../../utils/marks';
-import type { ExifData, FileEntry, PairGroup } from '../../types';
+import type { ExifData, FileEntry, PairGroup, XmpInfo } from '../../types';
 import { useToastStore } from '../../stores/toastStore';
 
 function formatSize(bytes: number): string {
@@ -26,16 +26,25 @@ export function ExifPanel({
   const push = useToastStore((s) => s.push);
   const [exif, setExif] = useState<ExifData | null>(null);
   const [writingRating, setWritingRating] = useState(false);
+  const [xmp, setXmp] = useState<XmpInfo | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setExif(null);
+    setXmp(null);
     getMetadata(file.path)
       .then((data) => {
         if (!cancelled) setExif(data);
       })
       .catch(() => {
         if (!cancelled) setExif({});
+      });
+    readXmpInfo(file.path)
+      .then((data) => {
+        if (!cancelled) setXmp(data);
+      })
+      .catch(() => {
+        if (!cancelled) setXmp({ path: '', exists: false });
       });
     return () => {
       cancelled = true;
@@ -61,8 +70,14 @@ export function ExifPanel({
   const rate = async (rating: number) => {
     setWritingRating(true);
     try {
-      await writeXmpRating(file.path, rating);
-      push('success', t(rating === -1 ? 'xmp.rejected' : 'xmp.rated', { rating }));
+      const result = await writeXmpRating(file.path, rating);
+      setXmp((current) => ({
+        path: result.path,
+        exists: true,
+        rating,
+        label: current?.label,
+      }));
+      push('success', t(result.updatedExisting ? 'xmp.updated' : rating === -1 ? 'xmp.rejected' : 'xmp.rated', { rating }));
     } catch (error) {
       push('error', t('xmp.failed', { error: String(error) }));
     } finally {
@@ -89,14 +104,15 @@ export function ExifPanel({
         <h3>{t('xmp.title')}</h3>
         <div>
           {[1, 2, 3, 4, 5].map((rating) => (
-            <button key={rating} type="button" disabled={writingRating} onClick={() => void rate(rating)}>
+            <button key={rating} type="button" className={xmp?.rating === rating ? 'active' : ''} disabled={writingRating} onClick={() => void rate(rating)}>
               {rating}★
             </button>
           ))}
-          <button type="button" className="reject" disabled={writingRating} onClick={() => void rate(-1)}>
+          <button type="button" className={`reject ${xmp?.rating === -1 ? 'active' : ''}`} disabled={writingRating} onClick={() => void rate(-1)}>
             {t('xmp.reject')}
           </button>
         </div>
+        {xmp?.exists && <span>{t('xmp.current', { rating: xmp.rating ?? '—', label: xmp.label ?? '—' })}</span>}
         <span>{t('xmp.safeHint')}</span>
       </div>
       <div className="exif-files">

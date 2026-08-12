@@ -1144,6 +1144,10 @@ button.danger {
   overflow-y: auto;
 }
 
+.about-screen .settings-section {
+  max-width: none;
+}
+
 .about-identity {
   display: flex;
   flex-direction: column;
@@ -1237,6 +1241,60 @@ button.danger {
 .audit-paths dd {
   overflow-wrap: anywhere;
   user-select: text;
+}
+
+.storage-group-title {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.storage-paths {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+  gap: 8px 14px;
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.storage-paths:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.storage-paths dt {
+  color: var(--text-muted);
+}
+
+.storage-paths dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.storage-paths code {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  white-space: normal;
+}
+
+.storage-paths small {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 760px) {
+  .storage-paths {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .storage-paths dd {
+    margin-bottom: 7px;
+  }
 }
 
 .settings-actions {
@@ -1348,4 +1406,283 @@ button.danger {
 .spinner {
   color: var(--text-muted);
   padding: 24px;
+}
+
+.fatal-error {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px;
+  background: var(--bg);
+  color: var(--text);
+  text-align: center;
+}
+
+.fatal-error h1 {
+  font-size: 20px;
+}
+
+.fatal-error p {
+  max-width: 620px;
+  color: var(--text-muted);
+}
+
+.fatal-error pre {
+  max-width: min(760px, 90vw);
+  overflow: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  color: var(--danger);
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+/* ---------- Recoverable sessions ---------- */
+
+.recent-folders {
+  width: min(680px, 90vw);
+  margin-top: 24px;
+  text-align: left;
+}
+
+.recent-folders h2 {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.recent-folders ul {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  list-style: none;
+}
+
+.recent-folders li {
+  display: flex;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-panel);
+}
+
+.recent-folders li button:first-child {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.recent-folders .recent-forget {
+  width: 36px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* ---------- Professional image viewer ---------- */
+
+.zoom-viewport {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  background: #1a1a1e;
+  touch-action: none;
+  cursor: zoom-in;
+}
+
+.zoom-viewport.zoomed {
+  cursor: grab;
+}
+
+.zoom-viewport.zoomed:active {
+  cursor: grabbing;
+}
+
+.zoom-viewport > img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+  user-select: none;
+  pointer-events: none;
+}
+
+.preview-image {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+}
+
+.zoom-controls {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 7px;
+  background: rgba(15, 15, 18, 0.78);
+  color: white;
+  backdrop-filter: blur(8px);
+}
+
+.zoom-controls button {
+  min-height: 27px;
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+}
+
+.zoom-controls button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.zoom-controls span {
+  min-width: 42px;
+  padding: 0 4px;
+  font-size: 11px;
+  text-align: right;
+}
+
+.compare-item > .zoom-viewport,
+.compare-blink > .zoom-viewport {
+  flex: 1;
+}
+
+.compare-header button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.compare-header button:disabled {
+  opacity: 0.4;
+}
+
+.overlay-opacity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.compare-overlay-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #1a1a1e;
+}
+
+.compare-overlay-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.compare-overlay-layer:first-child {
+  pointer-events: none;
+}
+
+.compare-blink {
+  flex: 1;
+}
+
+/* ---------- Similarity triage and jobs ---------- */
+
+.similar-progress {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-muted);
+}
+
+.similar-progress h1 {
+  color: var(--text);
+  font-size: 20px;
+}
+
+.similar-progress progress {
+  width: min(420px, 80vw);
+}
+
+.similar-item {
+  display: flex;
+  width: 132px;
+  flex: 0 0 132px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.similar-items .similar-preview {
+  width: 132px;
+  flex: none;
+}
+
+.similar-items .similar-keeper {
+  width: 100%;
+  padding: 5px;
+  border-color: var(--accent);
+  color: var(--accent);
+  font-size: 10px;
+}
+
+.settings-section h2 {
+  font-size: 14px;
+}
+
+.settings-section.column > label:not(.settings-check) {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, 220px) auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.settings-section input[type="number"] {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  color: var(--text);
+}
+
+.xmp-rating button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
 }

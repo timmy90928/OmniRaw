@@ -15,7 +15,9 @@
   "welcome": {
     "title": "Welcome to OmniRaw",
     "subtitle": "Culling tool with RAW/JPG lifecycle linking",
-    "openFolder": "Open Folder"
+    "openFolder": "Open Folder",
+    "recentFolders": "Recent folders",
+    "forgetFolder": "Remove {{root}} from recent folders"
   },
   "browse": {
     "title": "Browse",
@@ -43,7 +45,12 @@
     "empty": "Select 2 to 4 photo groups in Browse first.",
     "hint": "Compare 2 to 4 photos together for focus and expression checks.",
     "back": "Back to Browse",
-    "clear": "Clear selection"
+    "clear": "Clear selection",
+    "side": "Side by side",
+    "overlay": "Overlay",
+    "blink": "Blink",
+    "opacity": "Top layer opacity",
+    "blinkHint": "Switches every 0.5 seconds with synchronized zoom and position"
   },
   "similar": {
     "title": "Bursts and near-duplicates",
@@ -52,7 +59,12 @@
     "hint": "Groups by file time and a 64-bit perceptual hash; click a photo to cull.",
     "burst": "Burst sequence",
     "nearDuplicate": "Near-duplicate",
-    "score": "{{score}}% similar"
+    "score": "{{score}}% similar",
+    "hashing": "Building perceptual hashes {{done}} / {{total}}",
+    "grouping": "Grouping candidates {{done}} / {{total}}",
+    "cancelled": "Similarity analysis was cancelled.",
+    "keepThis": "Keep this, mark the rest",
+    "markedRest": "Kept one group and marked {{count}} others. Confirm them in Review."
   },
   "cull": {
     "title": "Cull",
@@ -118,7 +130,21 @@
     "restored": "Defaults restored.",
     "saved": "Settings saved.",
     "saveFailed": "Save failed: {{error}}",
-    "rescanHint": "Extension list changes take effect after rescanning the folder."
+    "rescanHint": "Extension list changes take effect after rescanning the folder.",
+    "similarityTitle": "Similarity analysis",
+    "burstWindow": "Burst window (milliseconds)",
+    "similarityWindow": "Near-match window (milliseconds)",
+    "hashDistance": "Perceptual hash tolerance",
+    "similarityHint": "Higher values group more loosely. EXIF capture time is preferred when available.",
+    "saveSimilarity": "Save similarity settings",
+    "cacheTitle": "Preview cache",
+    "cacheLimit": "Size limit (MB)",
+    "cacheUsage": "{{files}} files, {{size}} MB used / {{limit}} MB limit",
+    "saveCache": "Save cache settings",
+    "clearCache": "Clear all rebuildable caches",
+    "cacheClearHint": "Clears thumbnails, previews, and the similarity hash index. They are rebuilt automatically when needed.",
+    "cacheCleared": "Thumbnails, previews, and the similarity hash index were all cleared.",
+    "cacheClearFailed": "Could not clear cache: {{error}}"
   },
   "errors": {
     "scanFailed": "Scan failed — check that the folder is accessible.",
@@ -141,7 +167,41 @@
     "deletionOperations": "{{count}} operations recorded",
     "auditLog": "Append-only log",
     "auditManifest": "Latest manifest",
-    "changelog": "Changelog"
+    "changelog": "Changelog",
+    "storageTitle": "Data storage locations",
+    "storageHint": "These are the paths resolved on this system and the files OmniRaw may create beside your photos.",
+    "storageAppFiles": "Application and session data",
+    "storageCaches": "Rebuildable caches",
+    "storageCachesHint": "“Clear all rebuildable caches” removes thumbnails, previews, and the similarity hash index. It does not remove sessions or the shared system temporary directory.",
+    "storagePhotoFiles": "Photo folders and safety records",
+    "executableFile": "Executable",
+    "configFile": "Configuration file",
+    "appDataDir": "Application data directory",
+    "appLocalDataDir": "Local data directory",
+    "logDir": "Application log directory",
+    "webviewProfile": "WebView user data",
+    "sessionStorage": "Session Local Storage",
+    "sessionKeys": "Storage keys: {{keys}}",
+    "cacheRoot": "Cache root",
+    "thumbnailCache": "Thumbnail cache",
+    "previewCache": "Preview cache",
+    "similarityCache": "Similarity hash index",
+    "updaterTemp": "Updater temporary directory",
+    "updaterTempHint": "The updater uses shared OS-managed temporary storage and its exact subfolder may change. OmniRaw never clears the entire directory.",
+    "activeScanRoot": "Active photo root",
+    "noActiveFolder": "No folder is currently open",
+    "sourcePhotos": "Original photos",
+    "sourcePhotosPolicy": "Remain in the folder you selected. OmniRaw does not copy originals into its application data directories.",
+    "convertedJpeg": "JPEG converted from RAW",
+    "convertedJpegPattern": "<RAW folder>/<RAW basename>.jpg; collisions use _converted-N.jpg",
+    "xmpSidecars": "XMP sidecars",
+    "xmpSidecarPattern": "<photo folder>/<photo basename>.xmp",
+    "xmpBackups": "XMP update backups",
+    "xmpBackupPattern": "<original XMP path>.omniraw-backup-<process ID>-<timestamp>",
+    "deletedFiles": "Deleted photos",
+    "systemTrash": "Operating-system Recycle Bin / Trash (system managed and recoverable)",
+    "deletionLog": "Per-operation deletion log",
+    "deletionManifest": "Latest deletion manifest"
   },
   "status": {
     "ready": "Ready",
@@ -171,7 +231,20 @@
     "rated": "Created a {{rating}}-star XMP sidecar.",
     "rejected": "Created a Reject XMP sidecar.",
     "failed": "Could not write XMP: {{error}}",
-    "safeHint": "OmniRaw refuses to overwrite an existing sidecar."
+    "updated": "Safely updated the XMP rating to {{rating}} and backed up the original.",
+    "current": "Current rating: {{rating}}; label: {{label}}",
+    "safeHint": "Existing sidecars retain their other XMP fields and receive a unique backup before updates."
+  },
+  "viewer": {
+    "fit": "Fit",
+    "actual": "100%",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
+  },
+  "fatal": {
+    "title": "OmniRaw encountered a display error",
+    "message": "Your photos were not deleted or moved. Reload the interface and the session will be reconciled after rescanning.",
+    "reload": "Reload OmniRaw"
   },
   "common": {
     "cancel": "Cancel",

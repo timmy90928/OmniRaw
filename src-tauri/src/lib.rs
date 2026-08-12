@@ -66,19 +66,25 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::about::get_storage_locations,
             commands::scan::scan_folder,
+            commands::scan::refresh_changed_paths,
             commands::settings::get_config,
             commands::settings::set_config,
             commands::settings::reset_config,
             commands::media::request_thumbnails,
             commands::media::clear_thumbnail_queue,
             commands::media::get_metadata,
+            commands::media::get_cache_stats,
+            commands::media::clear_media_cache,
             commands::delete::commit_deletions,
             commands::delete::delete_files,
             commands::delete::get_deletion_history,
             commands::convert::convert_raw_to_jpg,
             commands::xmp::write_xmp_rating,
+            commands::xmp::read_xmp_info,
             commands::similarity::analyze_similar_groups,
+            commands::similarity::cancel_similarity_analysis,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

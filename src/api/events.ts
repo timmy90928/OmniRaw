@@ -47,3 +47,18 @@ export function onDeleteProgress(
 ): Promise<UnlistenFn> {
   return listen<DeleteProgressPayload>('delete://progress', (event) => handler(event.payload));
 }
+
+export interface SimilarityProgressPayload {
+  jobId: number;
+  done: number;
+  total: number;
+  stage: 'hashing' | 'grouping';
+}
+
+export function onSimilarityProgress(
+  handler: (payload: SimilarityProgressPayload) => void,
+): Promise<UnlistenFn> {
+  return listen<SimilarityProgressPayload>('similarity://progress', (event) =>
+    handler(event.payload),
+  );
+}

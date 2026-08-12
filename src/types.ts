@@ -52,6 +52,10 @@ export interface AppConfig {
   /** Pair matching basenames found in configured sibling folders. */
   matchSiblingFolders: boolean;
   siblingFolderNames: string[];
+  similarityBurstWindowMs: number;
+  similarityWindowMs: number;
+  similarityHashDistance: number;
+  cacheLimitMb: number;
 }
 
 export type GroupSort = 'nameAsc' | 'nameDesc' | 'newest' | 'oldest' | 'largest';
@@ -107,6 +111,40 @@ export interface DeletionHistory {
 export interface XmpWriteResult {
   path: string;
   rating: number;
+  updatedExisting: boolean;
+  backupPath?: string;
+}
+
+export interface XmpInfo {
+  path: string;
+  exists: boolean;
+  rating?: number;
+  label?: string;
+}
+
+export interface CacheStats {
+  files: number;
+  bytes: number;
+  limitBytes: number;
+}
+
+export interface StorageLocations {
+  executableFile: string;
+  configFile: string;
+  appDataDir: string;
+  appLocalDataDir: string;
+  appCacheDir: string;
+  appLogDir: string;
+  webviewProfileDir: string;
+  sessionStorageDir: string;
+  sessionStorageKeys: string[];
+  thumbnailCacheDir: string;
+  previewCacheDir: string;
+  similarityCacheFile: string;
+  deletionLogFile: string;
+  deletionManifestFile: string;
+  updaterTempDir: string;
+  activeScanRoot?: string;
 }
 
 export type SimilarityKind = 'burst' | 'nearDuplicate';

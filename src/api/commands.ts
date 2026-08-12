@@ -8,10 +8,17 @@ import type {
   ScanResult,
   XmpWriteResult,
   SimilarityCluster,
+  XmpInfo,
+  CacheStats,
+  StorageLocations,
 } from '../types';
 
 export function scanFolder(root: string): Promise<ScanResult> {
   return invoke<ScanResult>('scan_folder', { root });
+}
+
+export function refreshChangedPaths(paths: string[]): Promise<ScanResult> {
+  return invoke<ScanResult>('refresh_changed_paths', { paths });
 }
 
 export function getConfig(): Promise<AppConfig> {
@@ -50,8 +57,28 @@ export function writeXmpRating(path: string, rating: number): Promise<XmpWriteRe
   return invoke<XmpWriteResult>('write_xmp_rating', { path, rating });
 }
 
+export function readXmpInfo(path: string): Promise<XmpInfo> {
+  return invoke<XmpInfo>('read_xmp_info', { path });
+}
+
 export function analyzeSimilarGroups(): Promise<SimilarityCluster[]> {
   return invoke<SimilarityCluster[]>('analyze_similar_groups');
+}
+
+export function cancelSimilarityAnalysis(): Promise<void> {
+  return invoke<void>('cancel_similarity_analysis');
+}
+
+export function getCacheStats(): Promise<CacheStats> {
+  return invoke<CacheStats>('get_cache_stats');
+}
+
+export function getStorageLocations(): Promise<StorageLocations> {
+  return invoke<StorageLocations>('get_storage_locations');
+}
+
+export function clearMediaCache(): Promise<CacheStats> {
+  return invoke<CacheStats>('clear_media_cache');
 }
 
 /** Exports a RAW's embedded preview to a sibling JPG; resolves to the new path. */

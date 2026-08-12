@@ -126,3 +126,50 @@ pub struct SimilarityCluster {
     pub group_ids: Vec<String>,
     pub score: f32,
 }
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CacheStats {
+    pub files: usize,
+    pub bytes: u64,
+    pub limit_bytes: u64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct XmpInfo {
+    pub path: String,
+    pub exists: bool,
+    pub rating: Option<i8>,
+    pub label: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct XmpWriteResult {
+    pub path: String,
+    pub rating: i8,
+    pub updated_existing: bool,
+    pub backup_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StorageLocations {
+    pub executable_file: String,
+    pub config_file: String,
+    pub app_data_dir: String,
+    pub app_local_data_dir: String,
+    pub app_cache_dir: String,
+    pub app_log_dir: String,
+    pub webview_profile_dir: String,
+    pub session_storage_dir: String,
+    pub session_storage_keys: Vec<String>,
+    pub thumbnail_cache_dir: String,
+    pub preview_cache_dir: String,
+    pub similarity_cache_file: String,
+    pub deletion_log_file: String,
+    pub deletion_manifest_file: String,
+    pub updater_temp_dir: String,
+    pub active_scan_root: Option<String>,
+}

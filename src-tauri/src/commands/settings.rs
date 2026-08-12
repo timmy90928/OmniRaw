@@ -16,6 +16,10 @@ pub async fn set_config(
 ) -> Result<AppConfig, AppError> {
     config.validate()?;
     config::save(&state.config_path, &config)?;
+    state
+        .thumbs()
+        .set_cache_limit(config.cache_limit_mb * 1024 * 1024);
+    state.thumbs().prune_to_limit()?;
     *state.config.write().expect("config lock poisoned") = config.clone();
     Ok(config)
 }
@@ -34,6 +38,10 @@ pub async fn reset_config(state: State<'_, AppState>) -> Result<AppConfig, AppEr
         ..AppConfig::default()
     };
     config::save(&state.config_path, &config)?;
+    state
+        .thumbs()
+        .set_cache_limit(config.cache_limit_mb * 1024 * 1024);
+    state.thumbs().prune_to_limit()?;
     *state.config.write().expect("config lock poisoned") = config.clone();
     Ok(config)
 }

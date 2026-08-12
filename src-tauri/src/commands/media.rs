@@ -4,8 +4,21 @@ use tauri::State;
 
 use crate::error::AppError;
 use crate::exif;
-use crate::model::ExifData;
+use crate::model::{CacheStats, ExifData};
 use crate::state::AppState;
+
+fn combined_cache_stats(state: &AppState) -> Result<CacheStats, AppError> {
+    let mut stats = state.thumbs().stats()?;
+    match std::fs::metadata(state.similarity_cache_path()) {
+        Ok(metadata) => {
+            stats.files += 1;
+            stats.bytes += metadata.len();
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error.into()),
+    }
+    Ok(stats)
+}
 
 #[tauri::command]
 pub async fn get_metadata(state: State<'_, AppState>, path: String) -> Result<ExifData, AppError> {
@@ -40,4 +53,16 @@ pub async fn request_thumbnails(
 pub async fn clear_thumbnail_queue(state: State<'_, AppState>) -> Result<(), AppError> {
     state.thumbs().clear_queue();
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_cache_stats(state: State<'_, AppState>) -> Result<CacheStats, AppError> {
+    combined_cache_stats(&state)
+}
+
+#[tauri::command]
+pub async fn clear_media_cache(state: State<'_, AppState>) -> Result<CacheStats, AppError> {
+    state.thumbs().clear_cache()?;
+    state.clear_similarity_hashes()?;
+    combined_cache_stats(&state)
 }

@@ -5,9 +5,10 @@ import { getVersion } from '@tauri-apps/api/app';
 import { check, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { useToastStore } from '../../stores/toastStore';
+import { useLibraryStore } from '../../stores/libraryStore';
 import changelog from '../../../CHANGELOG.md?raw';
-import { getDeletionHistory } from '../../api/commands';
-import type { DeletionHistory } from '../../types';
+import { getDeletionHistory, getStorageLocations } from '../../api/commands';
+import type { DeletionHistory, StorageLocations } from '../../types';
 
 type UpdateState = 'idle' | 'checking' | 'uptodate' | 'available' | 'downloading' | 'error';
 
@@ -53,18 +54,24 @@ function Changelog({ text }: { text: string }) {
 export function AboutScreen() {
   const { t } = useTranslation();
   const push = useToastStore((s) => s.push);
+  const activeScanRoot = useLibraryStore((s) => s.scanResult?.root);
   const [version, setVersion] = useState('');
   const [state, setState] = useState<UpdateState>('idle');
   const [newVersion, setNewVersion] = useState('');
   const [progress, setProgress] = useState(0);
   const updateRef = useRef<Update | null>(null);
   const [history, setHistory] = useState<DeletionHistory | null>(null);
+  const [storage, setStorage] = useState<StorageLocations | null>(null);
 
   useEffect(() => {
     void getVersion()
       .then(setVersion)
       .catch(() => setVersion(''));
   }, []);
+
+  useEffect(() => {
+    void getStorageLocations().then(setStorage).catch(() => setStorage(null));
+  }, [activeScanRoot]);
 
   useEffect(() => {
     void getDeletionHistory().then(setHistory).catch(() => setHistory(null));
@@ -125,6 +132,53 @@ export function AboutScreen() {
             {version ? t('about.version', { version }) : t('common.loading')}
           </span>
         </div>
+      </section>
+
+      <section className="settings-section column">
+        <h2 className="about-changelog-title">{t('about.storageTitle')}</h2>
+        <span className="settings-hint">{t('about.storageHint')}</span>
+        {storage ? (
+          <>
+            <h3 className="storage-group-title">{t('about.storageAppFiles')}</h3>
+            <dl className="storage-paths">
+              <dt>{t('about.executableFile')}</dt><dd><code>{storage.executableFile}</code></dd>
+              <dt>{t('about.configFile')}</dt><dd><code>{storage.configFile}</code></dd>
+              <dt>{t('about.appDataDir')}</dt><dd><code>{storage.appDataDir}</code></dd>
+              <dt>{t('about.appLocalDataDir')}</dt><dd><code>{storage.appLocalDataDir}</code></dd>
+              <dt>{t('about.logDir')}</dt><dd><code>{storage.appLogDir}</code></dd>
+              <dt>{t('about.webviewProfile')}</dt><dd><code>{storage.webviewProfileDir}</code></dd>
+              <dt>{t('about.sessionStorage')}</dt>
+              <dd>
+                <code>{storage.sessionStorageDir}</code>
+                <small>{t('about.sessionKeys', { keys: storage.sessionStorageKeys.join(', ') })}</small>
+              </dd>
+              <dt>{t('about.updaterTemp')}</dt><dd><code>{storage.updaterTempDir}</code><small>{t('about.updaterTempHint')}</small></dd>
+            </dl>
+
+            <h3 className="storage-group-title">{t('about.storageCaches')}</h3>
+            <span className="settings-hint">{t('about.storageCachesHint')}</span>
+            <dl className="storage-paths">
+              <dt>{t('about.cacheRoot')}</dt><dd><code>{storage.appCacheDir}</code></dd>
+              <dt>{t('about.thumbnailCache')}</dt><dd><code>{storage.thumbnailCacheDir}</code></dd>
+              <dt>{t('about.previewCache')}</dt><dd><code>{storage.previewCacheDir}</code></dd>
+              <dt>{t('about.similarityCache')}</dt><dd><code>{storage.similarityCacheFile}</code></dd>
+            </dl>
+
+            <h3 className="storage-group-title">{t('about.storagePhotoFiles')}</h3>
+            <dl className="storage-paths">
+              <dt>{t('about.activeScanRoot')}</dt><dd><code>{activeScanRoot ?? storage.activeScanRoot ?? t('about.noActiveFolder')}</code></dd>
+              <dt>{t('about.sourcePhotos')}</dt><dd>{t('about.sourcePhotosPolicy')}</dd>
+              <dt>{t('about.convertedJpeg')}</dt><dd><code>{t('about.convertedJpegPattern')}</code></dd>
+              <dt>{t('about.xmpSidecars')}</dt><dd><code>{t('about.xmpSidecarPattern')}</code></dd>
+              <dt>{t('about.xmpBackups')}</dt><dd><code>{t('about.xmpBackupPattern')}</code></dd>
+              <dt>{t('about.deletedFiles')}</dt><dd>{t('about.systemTrash')}</dd>
+              <dt>{t('about.deletionLog')}</dt><dd><code>{storage.deletionLogFile}</code></dd>
+              <dt>{t('about.deletionManifest')}</dt><dd><code>{storage.deletionManifestFile}</code></dd>
+            </dl>
+          </>
+        ) : (
+          <span className="about-status">{t('common.loading')}</span>
+        )}
       </section>
 
       <section className="settings-section column">

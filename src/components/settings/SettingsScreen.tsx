@@ -5,6 +5,9 @@ import { useToastStore } from '../../stores/toastStore';
 import { ExtensionListEditor } from './ExtensionListEditor';
 import { Spinner } from '../common/Spinner';
 import type { AppConfig, DeleteMode } from '../../types';
+import type { CacheStats } from '../../types';
+import { clearMediaCache, getCacheStats } from '../../api/commands';
+import { useThumbStore } from '../../stores/thumbStore';
 
 const LANGUAGES = [
   { code: 'zh-TW', label: '繁體中文' },
@@ -20,10 +23,15 @@ export function SettingsScreen() {
   const restoreDefaults = useSettingsStore((s) => s.restoreDefaults);
   const push = useToastStore((s) => s.push);
   const [draft, setDraft] = useState<AppConfig | null>(null);
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
 
   useEffect(() => {
     setDraft(config);
   }, [config]);
+
+  useEffect(() => {
+    void getCacheStats().then(setCacheStats).catch(() => setCacheStats(null));
+  }, [config?.cacheLimitMb]);
 
   if (!draft) return <Spinner />;
 
@@ -129,6 +137,43 @@ export function SettingsScreen() {
           }}
         />
         <span className="settings-hint">{t('settings.matchExportedSuffixesHint')}</span>
+      </section>
+
+      <section className="settings-section column">
+        <h2>{t('settings.similarityTitle')}</h2>
+        <label>
+          {t('settings.burstWindow')}
+          <input type="number" min={100} max={60000} step={100} value={draft.similarityBurstWindowMs} onChange={(event) => setDraft({ ...draft, similarityBurstWindowMs: Number(event.target.value) })} />
+        </label>
+        <label>
+          {t('settings.similarityWindow')}
+          <input type="number" min={draft.similarityBurstWindowMs} max={600000} step={1000} value={draft.similarityWindowMs} onChange={(event) => setDraft({ ...draft, similarityWindowMs: Number(event.target.value) })} />
+        </label>
+        <label>
+          {t('settings.hashDistance')}
+          <input type="range" min={0} max={32} value={draft.similarityHashDistance} onChange={(event) => setDraft({ ...draft, similarityHashDistance: Number(event.target.value) })} />
+          <span>{draft.similarityHashDistance}</span>
+        </label>
+        <span className="settings-hint">{t('settings.similarityHint')}</span>
+        <button type="button" className="primary" disabled={!dirty} onClick={() => void apply(draft)}>{t('settings.saveSimilarity')}</button>
+      </section>
+
+      <section className="settings-section column">
+        <h2>{t('settings.cacheTitle')}</h2>
+        <label>
+          {t('settings.cacheLimit')}
+          <input type="number" min={128} max={32768} step={128} value={draft.cacheLimitMb} onChange={(event) => setDraft({ ...draft, cacheLimitMb: Number(event.target.value) })} />
+        </label>
+        <span className="settings-hint">
+          {cacheStats
+            ? t('settings.cacheUsage', { files: cacheStats.files, size: (cacheStats.bytes / 1024 / 1024).toFixed(1), limit: (cacheStats.limitBytes / 1024 / 1024).toFixed(0) })
+            : t('common.loading')}
+        </span>
+        <span className="settings-hint">{t('settings.cacheClearHint')}</span>
+        <div className="settings-actions">
+          <button type="button" className="primary" disabled={!dirty} onClick={() => void apply(draft)}>{t('settings.saveCache')}</button>
+          <button type="button" onClick={() => void clearMediaCache().then((stats) => { useThumbStore.getState().reset(); setCacheStats(stats); push('success', t('settings.cacheCleared')); }).catch((error) => push('error', t('settings.cacheClearFailed', { error: String(error) })))}>{t('settings.clearCache')}</button>
+        </div>
       </section>
 
       <section className="settings-section column">

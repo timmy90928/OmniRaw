@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLibraryStore } from '../../stores/libraryStore';
 import { useThumbStore } from '../../stores/thumbStore';
@@ -34,9 +34,12 @@ export function BrowseScreen() {
   const compared = useLibraryStore((s) => s.comparedGroupIds);
   const setView = useLibraryStore((s) => s.setView);
   const prevRootRef = useRef<string | null>(null);
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<GroupFilter>('all');
-  const [sort, setSort] = useState<GroupSort>('nameAsc');
+  const query = useLibraryStore((s) => s.browseQuery);
+  const filter = useLibraryStore((s) => s.browseFilter);
+  const sort = useLibraryStore((s) => s.browseSort);
+  const setQuery = useLibraryStore((s) => s.setBrowseQuery);
+  const setFilter = useLibraryStore((s) => s.setBrowseFilter);
+  const setSort = useLibraryStore((s) => s.setBrowseSort);
 
   useEffect(() => {
     if (!scanResult) return;
@@ -45,9 +48,38 @@ export function BrowseScreen() {
     if (prevRootRef.current === scanResult.root) return;
     prevRootRef.current = scanResult.root;
     useThumbStore.getState().reset();
-    useCullStore.getState().clearMarks();
-    useCullStore.getState().setIndex(0);
   }, [scanResult]);
+
+  // Hooks must run in the same order while `scanning` changes. Keeping this
+  // memo before the loading/empty early returns prevents a white-screen React
+  // crash when a folder scan completes.
+  const visible = useMemo(() => {
+    if (!scanResult) return [];
+    const needle = query.trim().toLocaleLowerCase();
+    return scanResult.groups
+      .map((group, originalIndex) => ({ group, originalIndex }))
+      .filter(({ group }) => filter === 'all' || group.status === filter)
+      .filter(({ group }) => {
+        if (!needle) return true;
+        return (
+          group.baseName.toLocaleLowerCase().includes(needle) ||
+          group.dir.toLocaleLowerCase().includes(needle) ||
+          [...group.raws, ...group.others].some((file) =>
+            file.fileName.toLocaleLowerCase().includes(needle),
+          )
+        );
+      })
+      .sort((a, b) => {
+        const aFiles = [...a.group.raws, ...a.group.others];
+        const bFiles = [...b.group.raws, ...b.group.others];
+        const newest = (files: typeof aFiles) => Math.max(...files.map((f) => f.mtimeMs), 0);
+        if (sort === 'nameDesc') return b.group.baseName.localeCompare(a.group.baseName);
+        if (sort === 'newest') return newest(bFiles) - newest(aFiles);
+        if (sort === 'oldest') return newest(aFiles) - newest(bFiles);
+        if (sort === 'largest') return groupSize(b.group) - groupSize(a.group);
+        return a.group.baseName.localeCompare(b.group.baseName);
+      });
+  }, [filter, query, scanResult, sort]);
 
   if (scanning) {
     return (
@@ -74,33 +106,6 @@ export function BrowseScreen() {
     },
     { complete: 0, rawOnly: 0, nonRawOnly: 0 },
   );
-
-  const visible = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
-    return scanResult.groups
-      .map((group, originalIndex) => ({ group, originalIndex }))
-      .filter(({ group }) => filter === 'all' || group.status === filter)
-      .filter(({ group }) => {
-        if (!needle) return true;
-        return (
-          group.baseName.toLocaleLowerCase().includes(needle) ||
-          group.dir.toLocaleLowerCase().includes(needle) ||
-          [...group.raws, ...group.others].some((file) =>
-            file.fileName.toLocaleLowerCase().includes(needle),
-          )
-        );
-      })
-      .sort((a, b) => {
-        const aFiles = [...a.group.raws, ...a.group.others];
-        const bFiles = [...b.group.raws, ...b.group.others];
-        const newest = (files: typeof aFiles) => Math.max(...files.map((f) => f.mtimeMs), 0);
-        if (sort === 'nameDesc') return b.group.baseName.localeCompare(a.group.baseName);
-        if (sort === 'newest') return newest(bFiles) - newest(aFiles);
-        if (sort === 'oldest') return newest(aFiles) - newest(bFiles);
-        if (sort === 'largest') return groupSize(b.group) - groupSize(a.group);
-        return a.group.baseName.localeCompare(b.group.baseName);
-      });
-  }, [filter, query, scanResult.groups, sort]);
 
   const libraryBytes = scanResult.groups.reduce((sum, group) => sum + groupSize(group), 0);
   const reclaimableBytes = scanResult.groups.reduce((sum, group) => {

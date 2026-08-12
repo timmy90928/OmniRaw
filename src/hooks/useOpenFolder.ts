@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 import { scanFolder } from '../api/commands';
 import { useLibraryStore } from '../stores/libraryStore';
+import { useCullStore } from '../stores/cullStore';
 import { useToastStore } from '../stores/toastStore';
 
 /** Opens the native folder picker, then scans the chosen folder. */
@@ -13,12 +14,13 @@ export function useOpenFolder() {
   const scanFailed = useLibraryStore((s) => s.scanFailed);
   const push = useToastStore((s) => s.push);
 
-  return useCallback(async () => {
-    const selected = await open({ directory: true });
+  return useCallback(async (root?: string) => {
+    const selected = root ?? await open({ directory: true });
     if (typeof selected !== 'string') return;
     startScan();
     try {
       const result = await scanFolder(selected);
+      useCullStore.getState().restoreForScan(result);
       setScanResult(result);
     } catch (err) {
       console.error('scan failed', err);

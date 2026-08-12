@@ -24,6 +24,14 @@ pub struct AppConfig {
     pub match_sibling_folders: bool,
     #[serde(default = "default_sibling_folder_names")]
     pub sibling_folder_names: Vec<String>,
+    #[serde(default = "default_burst_window_ms")]
+    pub similarity_burst_window_ms: i64,
+    #[serde(default = "default_similarity_window_ms")]
+    pub similarity_window_ms: i64,
+    #[serde(default = "default_hash_distance")]
+    pub similarity_hash_distance: u32,
+    #[serde(default = "default_cache_limit_mb")]
+    pub cache_limit_mb: u64,
 }
 
 fn default_true() -> bool {
@@ -35,6 +43,19 @@ fn default_sibling_folder_names() -> Vec<String> {
         .into_iter()
         .map(str::to_string)
         .collect()
+}
+
+fn default_burst_window_ms() -> i64 {
+    2_000
+}
+fn default_similarity_window_ms() -> i64 {
+    30_000
+}
+fn default_hash_distance() -> u32 {
+    8
+}
+fn default_cache_limit_mb() -> u64 {
+    2_048
 }
 
 impl Default for AppConfig {
@@ -53,6 +74,10 @@ impl Default for AppConfig {
             match_exported_suffixes: true,
             match_sibling_folders: false,
             sibling_folder_names: default_sibling_folder_names(),
+            similarity_burst_window_ms: default_burst_window_ms(),
+            similarity_window_ms: default_similarity_window_ms(),
+            similarity_hash_distance: default_hash_distance(),
+            cache_limit_mb: default_cache_limit_mb(),
         }
     }
 }
@@ -99,6 +124,28 @@ impl AppConfig {
         if self.match_sibling_folders && self.sibling_folder_names.is_empty() {
             return Err(AppError::InvalidConfig(
                 "sibling folder list must not be empty when matching is enabled".into(),
+            ));
+        }
+        if !(100..=60_000).contains(&self.similarity_burst_window_ms) {
+            return Err(AppError::InvalidConfig(
+                "burst window must be between 100 and 60000 ms".into(),
+            ));
+        }
+        if self.similarity_window_ms < self.similarity_burst_window_ms
+            || self.similarity_window_ms > 600_000
+        {
+            return Err(AppError::InvalidConfig(
+                "similarity window must include the burst window and be at most 600000 ms".into(),
+            ));
+        }
+        if self.similarity_hash_distance > 32 {
+            return Err(AppError::InvalidConfig(
+                "similarity hash distance must be between 0 and 32".into(),
+            ));
+        }
+        if !(128..=32_768).contains(&self.cache_limit_mb) {
+            return Err(AppError::InvalidConfig(
+                "cache limit must be between 128 and 32768 MB".into(),
             ));
         }
         Ok(())

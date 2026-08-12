@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { AppErrorBoundary } from './components/common/AppErrorBoundary';
 import './i18n';
 import './styles/app.css';
 import { onScanProgress, onThumbReady, onThumbError } from './api/events';
@@ -25,6 +26,8 @@ void onThumbError(({ path, message }) => {
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
   </React.StrictMode>,
 );

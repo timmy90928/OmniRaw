@@ -18,19 +18,35 @@ function App() {
   const view = useLibraryStore((s) => s.view);
   const refresh = useRefreshFolder();
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingChangedPaths = useRef(new Set<string>());
 
   // App-wide F5 → re-scan the current folder (Ctrl/Cmd+R is blocked by the hook).
   const hotkeys = useMemo(() => ({ f5: () => void refresh() }), [refresh]);
   useGlobalHotkeys(hotkeys);
 
+  // Resume the last folder and screen. The scan reconciles persisted marks
+  // against the files that still exist before anything becomes actionable.
+  useEffect(() => {
+    if (useLibraryStore.getState().scanRoot) void refresh();
+  }, [refresh]);
+
   useEffect(() => {
     let disposed = false;
     let unlisten: (() => void) | undefined;
-    void onScanChanged(() => {
+    const flushChanges = () => {
+      if (disposed) return;
+      if (useLibraryStore.getState().scanning) {
+        refreshTimer.current = setTimeout(flushChanges, 500);
+        return;
+      }
+      const paths = [...pendingChangedPaths.current];
+      pendingChangedPaths.current.clear();
+      if (paths.length > 0) void refresh(paths);
+    };
+    void onScanChanged((payload) => {
+      payload.paths.forEach((path) => pendingChangedPaths.current.add(path));
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
-      refreshTimer.current = setTimeout(() => {
-        if (!disposed && !useLibraryStore.getState().scanning) void refresh();
-      }, 700);
+      refreshTimer.current = setTimeout(flushChanges, 700);
     }).then((fn) => {
       if (disposed) fn();
       else unlisten = fn;
@@ -38,6 +54,7 @@ function App() {
     return () => {
       disposed = true;
       if (refreshTimer.current) clearTimeout(refreshTimer.current);
+      pendingChangedPaths.current.clear();
       unlisten?.();
     };
   }, [refresh]);

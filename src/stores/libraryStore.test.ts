@@ -29,7 +29,11 @@ describe('libraryStore deletion reconciliation', () => {
       scanResult: null,
       scanning: false,
       scanProgress: 0,
+      recentFolders: [],
       comparedGroupIds: new Set(),
+      browseQuery: '',
+      browseFilter: 'all',
+      browseSort: 'nameAsc',
     });
   });
 
@@ -59,5 +63,27 @@ describe('libraryStore deletion reconciliation', () => {
     expect(useLibraryStore.getState().comparedGroupIds.has('b')).toBe(false);
     useLibraryStore.getState().toggleCompared('e');
     expect(useLibraryStore.getState().comparedGroupIds.has('e')).toBe(true);
+  });
+
+  it('keeps the latest eight recent folders and persists browse preferences in state', () => {
+    for (let index = 0; index < 10; index += 1) {
+      useLibraryStore.getState().setScanResult({
+        root: `/photos/${index}`,
+        groups: [],
+        totalFiles: 0,
+        skippedFiles: 0,
+      });
+    }
+    useLibraryStore.getState().setBrowseQuery('portrait');
+    useLibraryStore.getState().setBrowseFilter('complete');
+    useLibraryStore.getState().setBrowseSort('newest');
+    const state = useLibraryStore.getState();
+    expect(state.recentFolders).toHaveLength(8);
+    expect(state.recentFolders[0]).toBe('/photos/9');
+    expect([state.browseQuery, state.browseFilter, state.browseSort]).toEqual([
+      'portrait',
+      'complete',
+      'newest',
+    ]);
   });
 });

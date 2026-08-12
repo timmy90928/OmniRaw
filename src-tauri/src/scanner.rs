@@ -15,6 +15,46 @@ pub struct CollectedFiles {
     pub skipped_files: usize,
 }
 
+pub fn file_entry(path: &Path, config: &AppConfig) -> Result<Option<FileEntry>, AppError> {
+    let ext = match path.extension().and_then(|extension| extension.to_str()) {
+        Some(extension) => extension.to_lowercase(),
+        None => return Ok(None),
+    };
+    let kind = if config
+        .raw_extensions
+        .iter()
+        .any(|extension| extension == &ext)
+    {
+        FileKind::Raw
+    } else if config
+        .non_raw_extensions
+        .iter()
+        .any(|extension| extension == &ext)
+    {
+        FileKind::NonRaw
+    } else {
+        return Ok(None);
+    };
+    let meta = std::fs::metadata(path)?;
+    let mtime_ms = meta
+        .modified()
+        .ok()
+        .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+        .map(|duration| duration.as_millis() as i64)
+        .unwrap_or(0);
+    Ok(Some(FileEntry {
+        path: path.to_string_lossy().into_owned(),
+        file_name: path
+            .file_name()
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_default(),
+        ext,
+        kind,
+        size: meta.len(),
+        mtime_ms,
+    }))
+}
+
 /// Walks `root` recursively and classifies files by extension.
 /// `on_progress` is called with the number of files seen so far (every 500).
 pub fn collect_files(
@@ -50,45 +90,10 @@ pub fn collect_files(
             on_progress(total_files);
         }
 
-        let path = item.path();
-        let ext = match path.extension().and_then(|e| e.to_str()) {
-            Some(e) => e.to_lowercase(),
-            None => {
-                skipped_files += 1;
-                continue;
-            }
-        };
-        let kind = if config.raw_extensions.iter().any(|e| e == &ext) {
-            FileKind::Raw
-        } else if config.non_raw_extensions.iter().any(|e| e == &ext) {
-            FileKind::NonRaw
-        } else {
-            skipped_files += 1;
-            continue;
-        };
-
-        let meta = match item.metadata() {
-            Ok(m) => m,
-            Err(_) => {
-                skipped_files += 1;
-                continue;
-            }
-        };
-        let mtime_ms = meta
-            .modified()
-            .ok()
-            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-            .map(|d| d.as_millis() as i64)
-            .unwrap_or(0);
-
-        entries.push(FileEntry {
-            path: path.to_string_lossy().into_owned(),
-            file_name: item.file_name().to_string_lossy().into_owned(),
-            ext,
-            kind,
-            size: meta.len(),
-            mtime_ms,
-        });
+        match file_entry(item.path(), config) {
+            Ok(Some(entry)) => entries.push(entry),
+            Ok(None) | Err(_) => skipped_files += 1,
+        }
     }
 
     Ok(CollectedFiles {

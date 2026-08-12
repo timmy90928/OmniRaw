@@ -15,7 +15,9 @@
   "welcome": {
     "title": "歡迎使用 OmniRaw",
     "subtitle": "RAW 與 JPG 生命週期連動的選片工具",
-    "openFolder": "開啟資料夾"
+    "openFolder": "開啟資料夾",
+    "recentFolders": "最近使用的資料夾",
+    "forgetFolder": "從最近清單移除 {{root}}"
   },
   "browse": {
     "title": "瀏覽",
@@ -43,7 +45,12 @@
     "empty": "請先在瀏覽頁選取 2 至 4 組照片。",
     "hint": "同步並排檢視 2 至 4 張照片，適合比較對焦與表情。",
     "back": "回到瀏覽",
-    "clear": "清除選取"
+    "clear": "清除選取",
+    "side": "並排",
+    "overlay": "疊圖",
+    "blink": "閃爍比較",
+    "opacity": "上層透明度",
+    "blinkHint": "每 0.5 秒切換；縮放與位置保持同步"
   },
   "similar": {
     "title": "連拍與近似照片",
@@ -52,7 +59,12 @@
     "hint": "以檔案時間與 64-bit 感知雜湊分群；點照片可進入選片。",
     "burst": "連拍群組",
     "nearDuplicate": "近似照片",
-    "score": "相似度 {{score}}%"
+    "score": "相似度 {{score}}%",
+    "hashing": "建立感知雜湊 {{done}} / {{total}}",
+    "grouping": "分析分組 {{done}} / {{total}}",
+    "cancelled": "已取消相似照片分析。",
+    "keepThis": "保留這張，其餘標記",
+    "markedRest": "已保留一組並標記其餘 {{count}} 組；請到「審閱」確認。"
   },
   "cull": {
     "title": "選片",
@@ -118,7 +130,21 @@
     "restored": "已還原預設設定。",
     "saved": "設定已儲存。",
     "saveFailed": "儲存失敗:{{error}}",
-    "rescanHint": "副檔名清單變更後,重新掃描資料夾才會生效。"
+    "rescanHint": "副檔名清單變更後,重新掃描資料夾才會生效。",
+    "similarityTitle": "相似照片分析",
+    "burstWindow": "連拍時間窗（毫秒）",
+    "similarityWindow": "近似比對時間窗（毫秒）",
+    "hashDistance": "感知雜湊容許距離",
+    "similarityHint": "數值越大，分組越寬鬆；分析優先使用 EXIF 拍攝時間。",
+    "saveSimilarity": "儲存相似度設定",
+    "cacheTitle": "預覽快取",
+    "cacheLimit": "容量上限（MB）",
+    "cacheUsage": "目前 {{files}} 個檔案、{{size}} MB／上限 {{limit}} MB",
+    "saveCache": "儲存快取設定",
+    "clearCache": "清除所有可重新產生的快取",
+    "cacheClearHint": "會清除縮圖、預覽與相似度雜湊索引；下次使用相關功能時會自動重新建立。",
+    "cacheCleared": "縮圖、預覽與相似度雜湊索引已全部清除。",
+    "cacheClearFailed": "無法清除快取：{{error}}"
   },
   "errors": {
     "scanFailed": "掃描失敗,請確認資料夾可存取。",
@@ -141,7 +167,41 @@
     "deletionOperations": "已記錄 {{count}} 次操作",
     "auditLog": "逐筆日誌",
     "auditManifest": "最新版 manifest",
-    "changelog": "版本記錄"
+    "changelog": "版本記錄",
+    "storageTitle": "資料儲存位置",
+    "storageHint": "以下為目前系統實際解析的位置，以及 OmniRaw 可能在照片資料夾旁建立的檔案。",
+    "storageAppFiles": "應用程式與工作階段",
+    "storageCaches": "可重新產生的快取",
+    "storageCachesHint": "設定中的「清除所有可重新產生的快取」會清除縮圖、預覽與相似度雜湊索引，不會刪除工作階段或系統共用暫存目錄。",
+    "storagePhotoFiles": "照片資料夾與安全紀錄",
+    "executableFile": "執行檔",
+    "configFile": "設定檔",
+    "appDataDir": "應用程式資料目錄",
+    "appLocalDataDir": "本機資料目錄",
+    "logDir": "應用程式日誌目錄",
+    "webviewProfile": "WebView 使用者資料",
+    "sessionStorage": "工作階段 Local Storage",
+    "sessionKeys": "儲存鍵：{{keys}}",
+    "cacheRoot": "快取根目錄",
+    "thumbnailCache": "縮圖快取",
+    "previewCache": "預覽快取",
+    "similarityCache": "相似度雜湊索引",
+    "updaterTemp": "更新暫存目錄",
+    "updaterTempHint": "更新器使用作業系統管理的共用暫存空間，實際子目錄可能隨版本改變；OmniRaw 不會清空整個目錄。",
+    "activeScanRoot": "目前照片根目錄",
+    "noActiveFolder": "目前沒有開啟資料夾",
+    "sourcePhotos": "原始照片",
+    "sourcePhotosPolicy": "留在你選擇的照片資料夾；OmniRaw 不會把原始照片複製到應用程式資料目錄。",
+    "convertedJpeg": "RAW 轉出的 JPEG",
+    "convertedJpegPattern": "<RAW 所在資料夾>/<RAW 檔名>.jpg；若重名則為 _converted-N.jpg",
+    "xmpSidecars": "XMP sidecar",
+    "xmpSidecarPattern": "<照片所在資料夾>/<照片檔名（不含副檔名）>.xmp",
+    "xmpBackups": "XMP 更新備份",
+    "xmpBackupPattern": "<原 XMP 路徑>.omniraw-backup-<程序 ID>-<時間戳>",
+    "deletedFiles": "刪除的照片",
+    "systemTrash": "作業系統的資源回收桶／垃圾桶（由系統管理，可還原）",
+    "deletionLog": "刪除操作逐筆日誌",
+    "deletionManifest": "刪除操作最新 manifest"
   },
   "status": {
     "ready": "就緒",
@@ -171,7 +231,20 @@
     "rated": "已建立 {{rating}} 星 XMP sidecar。",
     "rejected": "已建立 Reject XMP sidecar。",
     "failed": "無法寫入 XMP：{{error}}",
-    "safeHint": "若 sidecar 已存在，OmniRaw 會拒絕覆寫。"
+    "updated": "已安全更新 XMP 評分為 {{rating}}，原檔已備份。",
+    "current": "目前評分：{{rating}}；標籤：{{label}}",
+    "safeHint": "更新既有 sidecar 時會保留其他 XMP 欄位，並留下唯一備份。"
+  },
+  "viewer": {
+    "fit": "適合視窗",
+    "actual": "100%",
+    "zoomIn": "放大",
+    "zoomOut": "縮小"
+  },
+  "fatal": {
+    "title": "OmniRaw 發生顯示錯誤",
+    "message": "你的照片沒有被刪除或移動。請重新載入介面；工作階段會在重新掃描後恢復。",
+    "reload": "重新載入 OmniRaw"
   },
   "common": {
     "cancel": "取消",

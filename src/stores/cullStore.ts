@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { ScanResult } from '../types';
 
 interface CullState {
+  sessionRoot: string | null;
   currentIndex: number;
   /** Which file inside the current group is being previewed. */
   previewIndex: number;
@@ -22,7 +23,26 @@ interface CullState {
    * and clamps the cursor to the new group count.
    */
   reconcileMarks: (result: ScanResult) => void;
+  restoreForScan: (result: ScanResult) => void;
 }
+
+interface PersistedCullState {
+  sessionRoot: string | null;
+  currentIndex: number;
+  previewIndex: number;
+  marked: Array<[string, string[]]>;
+}
+
+function loadPersisted(): PersistedCullState | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    return JSON.parse(localStorage.getItem('omniraw.cull-session.v1') ?? 'null');
+  } catch {
+    return null;
+  }
+}
+
+const persisted = loadPersisted();
 
 function withGroupSet(
   marked: Map<string, Set<string>>,
@@ -36,9 +56,10 @@ function withGroupSet(
 }
 
 export const useCullStore = create<CullState>((set) => ({
-  currentIndex: 0,
-  previewIndex: 0,
-  marked: new Map(),
+  sessionRoot: persisted?.sessionRoot ?? null,
+  currentIndex: persisted?.currentIndex ?? 0,
+  previewIndex: persisted?.previewIndex ?? 0,
+  marked: new Map((persisted?.marked ?? []).map(([id, paths]) => [id, new Set(paths)])),
   setIndex: (index) => set({ currentIndex: index, previewIndex: 0 }),
   step: (delta, total) =>
     set((s) => ({
@@ -85,4 +106,49 @@ export const useCullStore = create<CullState>((set) => ({
       }
       return { marked: next, currentIndex };
     }),
+  restoreForScan: (result) =>
+    set((state) => {
+      if (state.sessionRoot !== result.root) {
+        return {
+          sessionRoot: result.root,
+          currentIndex: 0,
+          previewIndex: 0,
+          marked: new Map(),
+        };
+      }
+      const currentIndex = Math.min(state.currentIndex, Math.max(result.groups.length - 1, 0));
+      const present = new Map(
+        result.groups.map((group) => [
+          group.id,
+          new Set([...group.raws, ...group.others].map((file) => file.path)),
+        ]),
+      );
+      const marked = new Map<string, Set<string>>();
+      for (const [groupId, paths] of state.marked) {
+        const available = present.get(groupId);
+        if (!available) continue;
+        const kept = new Set([...paths].filter((path) => available.has(path)));
+        if (kept.size > 0) marked.set(groupId, kept);
+      }
+      const group = result.groups[currentIndex];
+      const fileCount = group ? group.raws.length + group.others.length : 0;
+      return {
+        sessionRoot: result.root,
+        currentIndex,
+        previewIndex: Math.min(state.previewIndex, Math.max(fileCount - 1, 0)),
+        marked,
+      };
+    }),
 }));
+
+if (typeof localStorage !== 'undefined') {
+  useCullStore.subscribe((state) => {
+    const value: PersistedCullState = {
+      sessionRoot: state.sessionRoot,
+      currentIndex: state.currentIndex,
+      previewIndex: state.previewIndex,
+      marked: [...state.marked].map(([id, paths]) => [id, [...paths]]),
+    };
+    localStorage.setItem('omniraw.cull-session.v1', JSON.stringify(value));
+  });
+}

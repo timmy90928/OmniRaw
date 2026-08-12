@@ -8,6 +8,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
 use crate::error::AppError;
+use crate::model::CacheStats;
 use crate::model::FileKind;
 use crate::preview;
 
@@ -32,6 +33,8 @@ pub struct ThumbService {
     preview_dir: PathBuf,
     pending: Arc<Mutex<HashSet<String>>>,
     generation: Arc<AtomicU64>,
+    cache_lock: Arc<Mutex<()>>,
+    cache_limit_bytes: AtomicU64,
 }
 
 impl ThumbService {
@@ -46,7 +49,21 @@ impl ThumbService {
             preview_dir,
             pending: Arc::new(Mutex::new(HashSet::new())),
             generation: Arc::new(AtomicU64::new(0)),
+            cache_lock: Arc::new(Mutex::new(())),
+            cache_limit_bytes: AtomicU64::new(2 * 1024 * 1024 * 1024),
         })
+    }
+
+    pub fn set_cache_limit(&self, bytes: u64) {
+        self.cache_limit_bytes.store(bytes, Ordering::SeqCst);
+    }
+
+    pub fn thumbnail_dir(&self) -> &Path {
+        &self.thumb_dir
+    }
+
+    pub fn preview_dir(&self) -> &Path {
+        &self.preview_dir
     }
 
     /// Queues background thumbnail generation; emits `thumb://ready` /
@@ -65,9 +82,15 @@ impl ThumbService {
             let thumb_dir = self.thumb_dir.clone();
             let pending = Arc::clone(&self.pending);
             let gen_counter = Arc::clone(&self.generation);
+            let cache_lock = Arc::clone(&self.cache_lock);
             rayon::spawn(move || {
                 // A newer generation means the user navigated away; drop the job.
                 if gen_counter.load(Ordering::SeqCst) == generation {
+                    let _guard = cache_lock.lock().expect("cache lock poisoned");
+                    if gen_counter.load(Ordering::SeqCst) != generation {
+                        pending.lock().expect("pending lock poisoned").remove(&key);
+                        return;
+                    }
                     let path_str = path.to_string_lossy().into_owned();
                     match ensure_cached(&thumb_dir, &path, kind, CacheKind::Thumb) {
                         Ok(_) => {
@@ -97,14 +120,95 @@ impl ThumbService {
     /// Synchronous fetch used by the `omniraw://` protocol handler
     /// (which already runs off the main thread).
     pub fn get_thumbnail(&self, path: &Path, kind: FileKind) -> Result<Vec<u8>, AppError> {
-        let cached = ensure_cached(&self.thumb_dir, path, kind, CacheKind::Thumb)?;
-        Ok(fs::read(cached)?)
+        let _guard = self.cache_lock.lock().expect("cache lock poisoned");
+        let (cached, created) = ensure_cached(&self.thumb_dir, path, kind, CacheKind::Thumb)?;
+        let bytes = fs::read(cached)?;
+        if created {
+            self.prune_to_limit_unlocked()?;
+        }
+        Ok(bytes)
     }
 
     pub fn get_preview(&self, path: &Path, kind: FileKind) -> Result<Vec<u8>, AppError> {
-        let cached = ensure_cached(&self.preview_dir, path, kind, CacheKind::Preview)?;
-        Ok(fs::read(cached)?)
+        let _guard = self.cache_lock.lock().expect("cache lock poisoned");
+        let (cached, created) = ensure_cached(&self.preview_dir, path, kind, CacheKind::Preview)?;
+        let bytes = fs::read(cached)?;
+        if created {
+            self.prune_to_limit_unlocked()?;
+        }
+        Ok(bytes)
     }
+
+    pub fn stats(&self) -> Result<CacheStats, AppError> {
+        let _guard = self.cache_lock.lock().expect("cache lock poisoned");
+        self.stats_unlocked()
+    }
+
+    fn stats_unlocked(&self) -> Result<CacheStats, AppError> {
+        let files = cache_files(&[&self.thumb_dir, &self.preview_dir])?;
+        Ok(CacheStats {
+            files: files.len(),
+            bytes: files.iter().map(|(_, _, size)| size).sum(),
+            limit_bytes: self.cache_limit_bytes.load(Ordering::SeqCst),
+        })
+    }
+
+    pub fn clear_cache(&self) -> Result<(), AppError> {
+        self.clear_queue();
+        let _guard = self.cache_lock.lock().expect("cache lock poisoned");
+        for dir in [&self.thumb_dir, &self.preview_dir] {
+            for entry in fs::read_dir(dir)? {
+                let entry = entry?;
+                if entry.file_type()?.is_file() {
+                    fs::remove_file(entry.path())?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn prune_to_limit(&self) -> Result<CacheStats, AppError> {
+        let _guard = self.cache_lock.lock().expect("cache lock poisoned");
+        self.prune_to_limit_unlocked()
+    }
+
+    fn prune_to_limit_unlocked(&self) -> Result<CacheStats, AppError> {
+        let limit = self.cache_limit_bytes.load(Ordering::SeqCst);
+        let mut files = cache_files(&[&self.thumb_dir, &self.preview_dir])?;
+        let mut bytes: u64 = files.iter().map(|(_, _, size)| size).sum();
+        files.sort_by_key(|(_, used, _)| *used);
+        for (path, _, size) in &files {
+            if bytes <= limit {
+                break;
+            }
+            if fs::remove_file(path).is_ok() {
+                bytes = bytes.saturating_sub(*size);
+            }
+        }
+        Ok(CacheStats {
+            files: cache_files(&[&self.thumb_dir, &self.preview_dir])?.len(),
+            bytes,
+            limit_bytes: limit,
+        })
+    }
+}
+
+fn cache_files(dirs: &[&Path]) -> Result<Vec<(PathBuf, std::time::SystemTime, u64)>, AppError> {
+    let mut files = Vec::new();
+    for dir in dirs {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let meta = entry.metadata()?;
+            if meta.is_file() {
+                let used = meta
+                    .accessed()
+                    .or_else(|_| meta.modified())
+                    .unwrap_or(std::time::UNIX_EPOCH);
+                files.push((entry.path(), used, meta.len()));
+            }
+        }
+    }
+    Ok(files)
 }
 
 #[derive(Clone, Copy)]
@@ -114,7 +218,7 @@ enum CacheKind {
 }
 
 /// Cache key: blake3 over lowercased path + mtime + size.
-fn cache_file_name(path: &Path) -> Result<String, AppError> {
+pub fn cache_file_name(path: &Path) -> Result<String, AppError> {
     let meta = fs::metadata(path)?;
     let mtime_ms = meta
         .modified()
@@ -137,10 +241,10 @@ fn ensure_cached(
     path: &Path,
     kind: FileKind,
     cache_kind: CacheKind,
-) -> Result<PathBuf, AppError> {
+) -> Result<(PathBuf, bool), AppError> {
     let target = dir.join(cache_file_name(path)?);
     if target.exists() {
-        return Ok(target);
+        return Ok((target, false));
     }
     let bytes = match cache_kind {
         CacheKind::Thumb => preview::generate_thumbnail(path, kind)?,
@@ -160,7 +264,7 @@ fn ensure_cached(
             return Err(AppError::Other("thumbnail cache write failed".into()));
         }
     }
-    Ok(target)
+    Ok((target, true))
 }
 
 #[cfg(test)]
@@ -203,10 +307,10 @@ mod tests {
             .save_with_format(&src, image::ImageFormat::Png)
             .unwrap();
 
-        let first = ensure_cached(&cache, &src, FileKind::NonRaw, CacheKind::Thumb).unwrap();
+        let (first, _) = ensure_cached(&cache, &src, FileKind::NonRaw, CacheKind::Thumb).unwrap();
         assert!(first.exists());
         let mtime1 = fs::metadata(&first).unwrap().modified().unwrap();
-        let second = ensure_cached(&cache, &src, FileKind::NonRaw, CacheKind::Thumb).unwrap();
+        let (second, _) = ensure_cached(&cache, &src, FileKind::NonRaw, CacheKind::Thumb).unwrap();
         assert_eq!(first, second);
         assert_eq!(mtime1, fs::metadata(&second).unwrap().modified().unwrap());
     }

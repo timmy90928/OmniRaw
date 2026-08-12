@@ -4,6 +4,7 @@ import { MarkBadge } from '../common/MarkBadge';
 import { markSummary } from '../../utils/marks';
 import { useConvertRaw } from '../../hooks/useConvertRaw';
 import type { FileEntry, PairGroup } from '../../types';
+import { ZoomableImage } from '../common/ZoomableImage';
 
 export function PreviewPane({
   group,
@@ -25,11 +26,10 @@ export function PreviewPane({
 
   return (
     <div className="preview-pane">
-      <img
-        key={file.path}
-        className="preview-image"
+      <ZoomableImage
         src={previewUrl(file.path, file.mtimeMs)}
         alt={group.baseName}
+        className="preview-image"
       />
       {canConvert && (
         <button
