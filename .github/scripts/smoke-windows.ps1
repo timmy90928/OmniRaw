@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 
 $bundleRoot = Join-Path $PSScriptRoot '..\..\src-tauri\target'
 $installers = @(Get-ChildItem -Path $bundleRoot -Recurse -File | Where-Object {
-  $_.Extension -in '.msi', '.exe' -and $_.FullName -match '\bundle\'
+  $_.Extension -in '.msi', '.exe' -and $_.FullName -like '*\bundle\*'
 })
 if ($installers.Count -eq 0) {
   throw 'No Windows installer was produced.'
@@ -24,7 +24,7 @@ if ($msi) {
 }
 
 $appBinary = Get-ChildItem -Path $bundleRoot -Recurse -File -Filter 'omniraw.exe' |
-  Where-Object { $_.FullName -notmatch '\bundle\' } | Select-Object -First 1
+  Where-Object { $_.FullName -notlike '*\bundle\*' } | Select-Object -First 1
 if (-not $appBinary) { throw 'Built OmniRaw executable was not found.' }
 $signature = Get-AuthenticodeSignature -LiteralPath $appBinary.FullName
 Write-Host "Authenticode status: $($signature.Status)"
