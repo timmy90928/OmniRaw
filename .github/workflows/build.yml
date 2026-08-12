@@ -94,8 +94,80 @@ jobs:
 
       - run: npm ci
 
+      - name: Configure updater signing
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          UPDATER_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          UPDATER_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [[ -z "$UPDATER_PRIVATE_KEY" ]]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY is required for v* release tags."
+            exit 1
+          fi
+
+          {
+            echo 'TAURI_SIGNING_PRIVATE_KEY<<OMNIRAW_UPDATER_KEY'
+            printf '%s\n' "$UPDATER_PRIVATE_KEY"
+            echo 'OMNIRAW_UPDATER_KEY'
+            echo 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD<<OMNIRAW_UPDATER_PASSWORD'
+            printf '%s\n' "$UPDATER_PRIVATE_KEY_PASSWORD"
+            echo 'OMNIRAW_UPDATER_PASSWORD'
+          } >> "$GITHUB_ENV"
+
+      - name: Configure Apple signing
+        id: apple_signing
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE_VALUE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD_VALUE: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD_VALUE: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_SIGNING_IDENTITY_VALUE: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID_VALUE: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD_VALUE: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID_VALUE: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          signing_values=(
+            APPLE_CERTIFICATE_VALUE
+            APPLE_CERTIFICATE_PASSWORD_VALUE
+            KEYCHAIN_PASSWORD_VALUE
+            APPLE_SIGNING_IDENTITY_VALUE
+            APPLE_ID_VALUE
+            APPLE_PASSWORD_VALUE
+            APPLE_TEAM_ID_VALUE
+          )
+
+          configured=false
+          missing=()
+          for name in "${signing_values[@]}"; do
+            if [[ -n "${!name}" ]]; then
+              configured=true
+            else
+              missing+=("${name%_VALUE}")
+            fi
+          done
+
+          if [[ "$configured" == 'false' ]]; then
+            echo 'configured=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Apple signing is partially configured. Missing: ${missing[*]}"
+            exit 1
+          fi
+
+          {
+            echo "APPLE_SIGNING_IDENTITY=$APPLE_SIGNING_IDENTITY_VALUE"
+            echo "APPLE_ID=$APPLE_ID_VALUE"
+            echo "APPLE_PASSWORD=$APPLE_PASSWORD_VALUE"
+            echo "APPLE_TEAM_ID=$APPLE_TEAM_ID_VALUE"
+          } >> "$GITHUB_ENV"
+          echo 'configured=true' >> "$GITHUB_OUTPUT"
+
       - name: Import Apple Developer ID certificate
-        if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
+        if: steps.apple_signing.outputs.configured == 'true'
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -114,21 +186,11 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Required by createUpdaterArtifacts to sign bundles + emit latest.json.
-          # Add these as repository secrets before merging to main / tagging.
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # Developer ID signing + Apple notarization. Tauri detects these
-          # variables automatically; builds remain unsigned when they are absent.
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           # On tag pushes, create a GitHub Release with the bundles attached.
           tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
           releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('OmniRaw {0}', github.ref_name) || '' }}
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} ${{ startsWith(github.ref, 'refs/tags/') && '--config src-tauri/tauri.release.conf.json' || '' }}
 
       - name: Smoke-test Windows installer
         if: runner.os == 'Windows'
@@ -140,7 +202,7 @@ jobs:
       - name: Smoke-test macOS disk image
         if: runner.os == 'macOS'
         env:
-          REQUIRE_APPLE_SIGNING: ${{ secrets.APPLE_SIGNING_IDENTITY != '' }}
+          REQUIRE_APPLE_SIGNING: ${{ steps.apple_signing.outputs.configured }}
         run: bash .github/scripts/smoke-macos.sh
 
       # For non-tag runs, expose the bundles as workflow artifacts.
