@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local signing material (never commit private keys or passwords)
+.secrets/
+
 # Claude scratch space
 .claude/temp/
 

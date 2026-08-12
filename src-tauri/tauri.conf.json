@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "OmniRaw",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "com.omniraw.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -40,7 +40,7 @@
       "endpoints": [
         "https://github.com/timmy90928/OmniRaw/releases/latest/download/latest.json"
       ],
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENEOThBRTQ5MkI3NDY4NjIKUldSaWFIUXJTYTZZelU0K1FXVE80S202ZlVBc2hReDNWdWlRZmtDTHphWDlFUC91NHl2ZkRRZVQK"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE5N0VGNDE2RjI1RUQ2NzgKUldSNDFsN3lGdlIrR1pCWmJLWjF1VE44Ry92TlBVWC84a3hlRlU1Qm5RTjVuLzAvS3c2US9Oa0sK"
     }
   }
 }
